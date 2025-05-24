@@ -4,3 +4,8 @@ import './product/detail-product';
 import './search-bar';
 import './auth/login/login-page';
 import './auth/register/register-page';
+import './user/profile-page';
+import './item/my-items-page';
+import './transaction/my-transactions-page';
+import './transaction/detail-transaction-page';
+import './transaction/my-seller-transactions-page';

@@ -19,15 +19,27 @@ class Utils {
 
     // Fungsi autentikasi
     static isAuthenticated() {
-        return localStorage.getItem('isLoggedIn') === 'true';
+        // Cek apakah token ada di localStorage
+        const token = localStorage.getItem('token');
+        return token !== null && token !== undefined; // Kembalikan true jika token ada
     }
 
-    static login() {
-        localStorage.setItem('isLoggedIn', 'true');
+    // Metode untuk mengalihkan ke halaman login
+    static redirectToLogin() {
+        window.location.hash = '#/login';
     }
 
-    static logout() {
-        localStorage.removeItem('isLoggedIn');
+    // static login() { // Metode ini tidak lagi diperlukan jika status login ditentukan oleh token
+    //     localStorage.setItem('isLoggedIn', 'true');
+    // }
+
+    // static logout() { // Metode ini tidak lagi diperlukan jika status login ditentukan oleh token
+    //     localStorage.removeItem('isLoggedIn');
+    // }
+
+    static getUserInfo() {
+        const user = localStorage.getItem('user');
+        return user ? JSON.parse(user) : null;
     }
 }
 

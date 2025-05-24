@@ -5,6 +5,7 @@ class LoginPage extends HTMLElement {
 
     connectedCallback() {
         this.render();
+        this.setupFormSubmission();
     }
 
     render() {
@@ -16,23 +17,23 @@ class LoginPage extends HTMLElement {
                 </div>
 
                 <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-                    <form class="space-y-6" action="#" method="POST">
+                    <form id="login-form" class="space-y-6" action="#" method="POST">
                         <div>
                             <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
                             <div class="mt-2">
-                                <input type="email" name="email" id="email" autocomplete="email" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                                <input id="email" name="email" type="email" autocomplete="email" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
                             </div>
                         </div>
 
                         <div>
                             <div class="flex items-center justify-between">
                                 <label for="password" class="block text-sm/6 font-medium text-gray-900">Password</label>
-                                <div class="text-sm">
+                                <!-- <div class="text-sm">
                                     <a href="#" class="font-semibold text-indigo-600 hover:text-indigo-500">Forgot password?</a>
-                                </div>
+                                </div> -->
                             </div>
                             <div class="mt-2">
-                                <input type="password" name="password" id="password" autocomplete="current-password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                                <input id="password" name="password" type="password" autocomplete="current-password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
                             </div>
                         </div>
 
@@ -43,11 +44,65 @@ class LoginPage extends HTMLElement {
 
                     <p class="mt-10 text-center text-sm/6 text-gray-500">
                         Not a member?
-                        <a href="/#/register" class="font-semibold text-indigo-600 hover:text-indigo-500">Register now</a>
+                        <a href="/#/register" class="font-semibold text-indigo-600 hover:text-indigo-500">Create an account</a>
                     </p>
                 </div>
             </div>
         `;
+    }
+
+    setupFormSubmission() {
+        const form = this.querySelector('#login-form');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent default form submission
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            console.log('Sending login data to API:', data);
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) { // Check for successful HTTP status codes (2xx)
+                    if (result.status === 'success') {
+                        console.log('Login successful:', result);
+                        // Store token and user data in localStorage
+                        localStorage.setItem('token', result.token);
+                        localStorage.setItem('user', JSON.stringify(result.data.user));
+
+                        // Dispatch a custom event to notify other components
+                        const loginEvent = new CustomEvent('userLoggedIn', {
+                            detail: { user: result.data.user } // Opsional: kirim data user bersama event
+                        });
+                        window.dispatchEvent(loginEvent); // Dispatch event dari window
+
+                        alert('Login successful!'); // Add a success message
+                        window.location.href = '/#/'; // TODO: Change to your home page route
+                    } else {
+                        // Handle API status 'error' even with success HTTP status (less common but possible)
+                        console.error('Login failed (API error):', result.message);
+                        alert('Login failed: ' + result.message);
+                    }
+                } else { // Handle HTTP error status codes (4xx, 5xx)
+                    console.error('Login failed (HTTP error):', response.status, result.message);
+                    alert('Login failed: ' + result.message);
+                }
+
+            } catch (error) {
+                console.error('Error during login API call:', error);
+                // Display generic error message
+                alert('An error occurred during login. Please try again.');
+            }
+        });
     }
 }
 
