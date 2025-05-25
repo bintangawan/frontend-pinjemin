@@ -54,63 +54,69 @@ class ProfilePage extends HTMLElement {
         // Definisikan struktur HTML untuk halaman profil di sini
         // HTML ini akan menampilkan info pengguna, form update profil, form update password, dll.
         this.innerHTML = `
-            <div class="container mx-auto px-4 py-8">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Profil Pengguna</h2>
+            <div class="container mx-auto px-4 py-8 font-opensan">
+                <h2 class="text-2xl font-montserrat font-bold mb-6 text-gray-800">Profil Pengguna</h2>
 
-                <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-                    <div id="profile-info" class="mb-6 pb-4 border-b border-gray-200">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Informasi Akun</h3>
-                        <p class="mb-2 text-gray-600"><strong>Nama:</strong> <span id="user-name">Loading...</span></p>
-                        <p class="mb-2 text-gray-600"><strong>Email:</strong> <span id="user-email">Loading...</span></p>
-                        <p class="mb-2 text-gray-600"><strong>Provinsi:</strong> <span id="user-province">Loading...</span></p>
-                        <p class="mb-2 text-gray-600"><strong>Kota:</strong> <span id="user-city">Loading...</span></p>
+                <!-- Main Card Container -->
+                <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                    <!-- Informasi Akun Container (Dark) -->
+                    <div class="bg-gray-700 text-white p-4 rounded-md shadow-sm mb-6">
+                        <h3 class="text-xl font-montserrat font-semibold mb-3">Informasi Akun</h3>
+                        <div id="profile-info">
+                            <p class="mb-2"><strong>Nama:</strong> <span id="user-name">Loading...</span></p>
+                            <p class="mb-2"><strong>Email:</strong> <span id="user-email">Loading...</span></p>
+                            <p class="mb-2"><strong>Provinsi:</strong> <span id="user-province">Loading...</span></p>
+                            <p class="mb-2"><strong>Kota:</strong> <span id="user-city">Loading...</span></p>
+                        </div>
                     </div>
 
+                    <!-- Perbarui Profil Section (Inside White Card) -->
                     <div>
-                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Perbarui Profil</h3>
+                        <h3 class="text-xl font-montserrat font-semibold mb-4 text-gray-700">Perbarui Profil</h3>
                         <form id="update-profile-form" class="space-y-4">
                             <div>
-                                <label for="update-name" class="block text-sm font-medium text-gray-700">Nama</label>
-                                <input type="text" id="update-name" name="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2">
+                                <label for="update-name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
+                                <input type="text" id="update-name" name="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="Nama Lengkap" />
                             </div>
                             
                              <div>
-                                <label for="update-province" class="block text-sm font-medium text-gray-700">Provinsi</label>
-                                <select id="update-province" name="province_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2">
+                                <label for="update-province" class="block mb-2 text-sm font-medium text-gray-900">Provinsi</label>
+                                <select id="update-province" name="province_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                      <option value="">Pilih Provinsi</option>
-
                                  </select>
                             </div>
                              <div>
-                                <label for="update-city" class="block text-sm font-medium text-gray-700">Kota/Kabupaten</label>
-                                <select id="update-city" name="city_id" disabled class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <label for="update-city" class="block mb-2 text-sm font-medium text-gray-900">Kota/Kabupaten</label>
+                                <select id="update-city" name="city_id" disabled class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
                                     <option value="">Pilih Kota</option>
-
                                  </select>
                             </div>
-                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-semibold rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-semibold rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                Perbarui
                             </button>
                         </form>
                     </div>
                 </div>
 
-
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                     <h3 class="text-xl font-semibold mb-4 text-gray-700">Ubah Kata Sandi</h3>
-                     <form id="update-password-form" class="space-y-4">
-                         <div>
-                             <label for="current-password" class="block text-sm font-medium text-gray-700">Kata Sandi Saat Ini</label>
-                             <input type="password" id="current-password" name="currentPassword" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2">
-                         </div>
-                          <div>
-                             <label for="new-password" class="block text-sm font-medium text-gray-700">Kata Sandi Baru</label>
-                             <input type="password" id="new-password" name="newPassword" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2">
-                         </div>
-                         <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-semibold rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Ubah Kata Sandi
-                         </button>
-                     </form>
+                <!-- Second Card Container -->
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                     <!-- Ubah Kata Sandi Section (Inside White Card)-->
+                     <div>
+                         <h3 class="text-xl font-montserrat font-semibold mb-4 text-gray-700">Ubah Kata Sandi</h3>
+                         <form id="update-password-form" class="space-y-4">
+                             <div>
+                                 <label for="current-password" class="block mb-2 text-sm font-medium text-gray-900">Kata Sandi Saat Ini</label>
+                                 <input type="password" id="current-password" name="currentPassword" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                             </div>
+                              <div>
+                                 <label for="new-password" class="block mb-2 text-sm font-medium text-gray-900">Kata Sandi Baru</label>
+                                 <input type="password" id="new-password" name="newPassword" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                             </div>
+                             <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-semibold rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Ubah Kata Sandi
+                             </button>
+                         </form>
+                     </div>
                  </div>
 
             </div>

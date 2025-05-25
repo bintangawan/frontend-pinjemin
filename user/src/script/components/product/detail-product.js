@@ -233,41 +233,50 @@ class DetailProduct extends HTMLElement {
         const showBuyRentButtons = item.status === 'available' && !isOwner && !this._showRentForm;
 
         return `
-        <div class="bg-white shadow-md rounded-lg p-6 mb-8">
-            <h2 class="text-2xl font-bold mb-4">${item.name}</h2>
+        <div class="bg-white shadow-md rounded-lg p-6 mb-8 font-opensan">
+            <h2 class="text-2xl font-montserrat font-bold mb-6">${item.name}</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Column: Image and Actions -->
                 <div>
                     ${item.photos && item.photos.length > 0 ? `
-                        <img src="http://localhost:5000${item.photos[0]}" alt="${item.name}" class="w-full h-64 object-cover rounded-md mb-4">
-                    ` : '<div class="w-full h-64 bg-gray-200 rounded-md mb-4 flex items-center justify-center text-gray-500">Tidak Ada Foto</div>'}
-
-                    <p><strong>Deskripsi:</strong> ${item.description || '-'}</p>
-                    <p><strong>Kategori:</strong> ${item.category_name || '-'}</p>
-                    <p><strong>Status Item:</strong> <span class="${statusColorClass}">${statusDisplay}</span></p>
-                </div>
-                <div>
-                    <h3 class="text-xl font-semibold mb-4">Informasi Harga</h3>
-                    ${item.is_available_for_sell ? `<p><strong>Harga Jual:</strong> ${formatRupiah(item.price_sell)}</p>` : ''}
-                    ${item.is_available_for_rent ? `
-                        <p><strong>Harga Sewa per Hari:</strong> ${formatRupiah(item.price_rent)}</p>
-                        <p><strong>Deposit Sewa:</strong> ${formatRupiah(item.deposit_amount)}</p>
-                    ` : ''}
-
-                    <h3 class="text-xl font-semibold mb-4 mt-6">Lokasi & Penjual</h3>
-                    <p><strong>Lokasi:</strong> ${item.city_name || '-'}, ${item.province_name || '-'}</p>
-                    <p><strong>Penjual:</strong> ${item.owner_name || 'Tidak Diketahui'} (${item.owner_email || '-'})</p>
+                        <img src="http://localhost:5000${item.photos[0]}" alt="${item.name}" class="w-full h-64 object-cover rounded-md mb-6">
+                    ` : '<div class="w-full h-64 bg-gray-200 rounded-md mb-6 flex items-center justify-center text-gray-500">Tidak Ada Foto</div>'}
 
                     ${showBuyRentButtons ? `
-                        <div class="flex space-x-4 mt-6">
-                            ${item.is_available_for_sell ? `<button id="buy-button" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Beli</button>` : ''}
-                            ${item.is_available_for_rent ? `<button id="rent-button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Sewa</button>` : ''}
-                        </div>
+                         <div class="flex space-x-4 mt-6">
+                             ${item.is_available_for_sell ? `<button id="buy-button" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold">Beli</button>` : ''}
+                             ${item.is_available_for_rent ? `<button id="rent-button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold">Sewa</button>` : ''}
+                         </div>
                     ` : isOwner && item.status === 'available' ?
                 `<p class="mt-6 text-gray-600">Anda adalah pemilik item ini.</p>`
                 : item.status !== 'available' ?
                     `<p class="mt-6 text-gray-600">Item ini saat ini tidak tersedia.</p>`
                     : ''}
+                </div>
 
+                <!-- Right Column: All Information Details -->
+                <div class="space-y-6">
+                    <div class="bg-gray-700 text-white p-4 rounded-md shadow-sm">
+                         <h3 class="text-xl font-montserrat font-semibold mb-3">Detail Item</h3>
+                         <p><strong>Deskripsi:</strong> ${item.description || '-'}</p>
+                         <p><strong>Kategori:</strong> ${item.category_name || '-'}</p>
+                         <p><strong>Status Item:</strong> <span class="${statusColorClass}">${statusDisplay}</span></p>
+                     </div>
+
+                    <div class="bg-gray-700 text-white p-4 rounded-md shadow-sm">
+                         <h3 class="text-xl font-montserrat font-semibold mb-3">Informasi Harga</h3>
+                         ${item.is_available_for_sell ? `<p><strong>Harga Jual:</strong> ${formatRupiah(item.price_sell)}</p>` : ''}
+                         ${item.is_available_for_rent ? `
+                             <p><strong>Harga Sewa per Hari:</strong> ${formatRupiah(item.price_rent)}</p>
+                             <p><strong>Deposit Sewa:</strong> ${formatRupiah(item.deposit_amount)}</p>
+                         ` : ''}
+                     </div>
+
+                    <div class="bg-gray-700 text-white p-4 rounded-md shadow-sm">
+                         <h3 class="text-xl font-montserrat font-semibold mb-3">Lokasi & Penjual</h3>
+                         <p><strong>Lokasi:</strong> ${item.city_name || '-'}, ${item.province_name || '-'}</p>
+                         <p><strong>Penjual:</strong> ${item.owner_name || 'Tidak Diketahui'} (${item.owner_email || '-'})</p>
+                     </div>
                 </div>
             </div>
         </div>

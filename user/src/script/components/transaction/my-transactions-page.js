@@ -80,35 +80,47 @@ class MyTransactionsPage extends HTMLElement {
         transactionsListElement.innerHTML = ''; // Bersihkan daftar sebelumnya
 
         if (this.transactions.length === 0) {
-            transactionsListElement.innerHTML = `<p>Anda belum memiliki ${this.transactionType === 'rent' ? 'pinjaman' : 'transaksi pembelian'} apapun.</p>`;
+            // Added font-opensan and text-gray-700 for consistency
+            transactionsListElement.innerHTML = `<p class="text-gray-700 font-opensan">Anda belum memiliki ${this.transactionType === 'rent' ? 'pinjaman' : 'transaksi pembelian'} apapun.</p>`;
             return;
         }
 
+        // Added space-y-4 for spacing between transaction cards
         transactionsListElement.innerHTML = `
              <div class="space-y-4">
                 ${this.transactions.map(transaction => `
-                    <div class="border p-4 rounded-md shadow-sm bg-white flex justify-between items-center flex-wrap">
-                        <div class="flex-1 min-w-0 mr-4">
-                            <h3 class="text-lg font-semibold">${transaction.item_name || 'Nama Item Tidak Diketahui'}</h3>
-                            <p>Tipe: <span class="capitalize">${transaction.type}</span></p>
-                            <p>Status: <span class="capitalize">${transaction.status}</span></p>
-                            <p>Total Harga: Rp ${transaction.total_price ? parseFloat(transaction.total_price).toLocaleString('id-ID') : 'N/A'}</p>
-                            ${transaction.type === 'rent' ? `
-                                <p>Tanggal Sewa: ${transaction.rent_start_date ? new Date(transaction.rent_start_date).toLocaleDateString('id-ID') : '-'} - ${transaction.rent_end_date ? new Date(transaction.rent_end_date).toLocaleDateString('id-ID') : '-'}</p>
-                                <p>Deposit Dibayar: Rp ${transaction.deposit_paid ? parseFloat(transaction.deposit_paid).toLocaleString('id-ID') : '0'}</p>
-                            ` : ''}
-                            <p>Tanggal Transaksi: ${transaction.created_at ? new Date(transaction.created_at).toLocaleDateString('id-ID') : '-'}</p>
-                            <!-- Add more details as needed -->
-                        </div>
-                        <div class="mt-4 md:mt-0 flex flex-wrap gap-2"> 
-                           <a href="/#/transactions/${transaction.id}" class="bg-blue-500 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded inline-block">Detail</a>
+                    <!-- Card Container for each transaction item -->
+                    <!-- Added modern card styling: bg-white, p-6, rounded-lg, shadow-md, text-gray-800 for default text -->
+                    <div class="p-6 bg-white rounded-lg shadow-md text-gray-800">
+                        <!-- Flex container for content and actions -->
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center flex-wrap">
+                            <!-- Transaction Details Area -->
+                            <div class="flex-1 min-w-0 mr-0 md:mr-4 mb-4 md:mb-0">
+                                <!-- Item Name: Font Montserrat Bold -->
+                                <h3 class="text-lg font-montserrat font-bold mb-2">${transaction.item_name || 'Nama Item Tidak Diketahui'}</h3>
+                                <!-- Transaction Details: Font Open Sans -->
+                                <p class="text-sm text-gray-700 font-opensan">Tipe: <span class="capitalize">${transaction.type}</span></p>
+                                <p class="text-sm text-gray-700 font-opensan">Status: <span class="capitalize">${transaction.status}</span></p>
+                                <p class="text-sm font-semibold text-gray-800 font-opensan">Total Harga: Rp ${transaction.total_price ? parseFloat(transaction.total_price).toLocaleString('id-ID') : 'N/A'}</p>
+                                ${transaction.type === 'rent' ? `
+                                    <p class="text-sm text-gray-700 font-opensan">Tanggal Sewa: ${transaction.rent_start_date ? new Date(transaction.rent_start_date).toLocaleDateString('id-ID') : '-'} - ${transaction.rent_end_date ? new Date(transaction.rent_end_date).toLocaleDateString('id-ID') : '-'}</p>
+                                    <p class="text-sm text-gray-700 font-opensan">Deposit Dibayar: Rp ${transaction.deposit_paid ? parseFloat(transaction.deposit_paid).toLocaleString('id-ID') : '0'}</p>
+                                ` : ''}
+                                <p class="text-sm text-gray-700 font-opensan">Tanggal Transaksi: ${transaction.created_at ? new Date(transaction.created_at).toLocaleDateString('id-ID') : '-'}</p>
+                                <!-- Add more details as needed -->
+                            </div>
+                            <!-- Action Buttons Area -->
+                            <div class="flex flex-wrap gap-2">
+                                <!-- Detail Button: Styled like primary button -->
+                               <a href="/#/transactions/${transaction.id}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-md font-semibold inline-block text-center font-opensan">Detail</a>
 
-                           ${transaction.status === 'completed' ? `
-                                
-                                 <a href="/#/items/${transaction.item_id}#review" class="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded inline-block">
-                                     Beri Review
-                                 </a>
-                             ` : ''}
+                               ${transaction.status === 'completed' ? `
+                                    <!-- Review Button: Styled like secondary/success button -->
+                                     <a href="/#/items/${transaction.item_id}#review" class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-md font-semibold inline-block text-center font-opensan">
+                                         Beri Review
+                                     </a>
+                                 ` : ''}
+                            </div>
                         </div>
                     </div>
                 `).join('')}

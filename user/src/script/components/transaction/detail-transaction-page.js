@@ -1,7 +1,5 @@
 import { authenticatedRequest } from '../../utils/apiService.js';
-import Utils from '../../utils/utils.js'; // Assuming Utils has isAuthenticated and redirectToLogin
-// Import the Socket.io client library
-// Pastikan Anda sudah menjalankan 'npm install socket.io-client' atau 'yarn add socket.io-client'
+import Utils from '../../utils/utils.js';
 import { io } from 'socket.io-client';
 
 class DetailTransactionPage extends HTMLElement {

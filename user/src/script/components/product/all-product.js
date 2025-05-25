@@ -68,8 +68,8 @@ class AllProduct extends HTMLElement {
 
     render() {
         this.innerHTML = `
-        <div class="bg-white">
-            <div class="py-4">
+        <div class="bg-white rounded-lg">
+            <div class="py-6">
                 <search-bar></search-bar>
             </div>
             <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8">
@@ -94,7 +94,7 @@ class AllProduct extends HTMLElement {
         }
 
         return `
-            <div class="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
+            <div class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-2">
                 ${this.generateItemList(this.items)}
             </div>
         `;
@@ -116,18 +116,24 @@ class AllProduct extends HTMLElement {
         const backendBaseUrl = 'http://localhost:5000';
 
         return items.map(item => `
-            <a href="/#/items/${item.id}" class="group relative">
-                <div class="aspect-square w-full overflow-hidden rounded-lg bg-gray-200 group-hover:opacity-75 xl:aspect-w-7 xl:aspect-h-8">
-                    <img src="${item.thumbnail ? backendBaseUrl + item.thumbnail : 'https://via.placeholder.com/400x300?text=No+Image'}" alt="${item.name || 'Item image'}" class="h-full w-full object-cover object-center">
+            <div class="w-full bg-white rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 relative">
+                <a href="/#/items/${item.id}">
+                    <img class="p-4 rounded-t-lg object-cover aspect-square w-full" src="${item.thumbnail ? backendBaseUrl + item.thumbnail : 'https://via.placeholder.com/400x300?text=No+Image'}" alt="${item.name || 'Item image'}" />
+                </a>
+                <div class="px-5 pb-5">
+                    <a href="/#/items/${item.id}">
+                        <h5 class="text-xl font-montserrat font-bold tracking-tight text-gray-900 dark:text-white truncate">${item.name || 'Unnamed Item'}</h5>
+                    </a>
+                     <div class="absolute top-2 left-2 z-10 flex space-x-1">
+                        ${item.is_available_for_rent ? `<span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-md">Sewa</span>` : ''}
+                        ${item.is_available_for_sell ? `<span class="bg-green-500 text-white text-xs px-2 py-1 rounded-md">Jual</span>` : ''}
+                    </div>
+                    <div class="mt-2.5">
+                        ${item.is_available_for_sell ? `<p class="text-m font-opensan font-semibold text-gray-900 dark:text-white">Jual: ${formatRupiah(item.price_sell)}</p>` : ''}
+                        ${item.is_available_for_rent ? `<p class="text-m font-opensan font-semibold text-gray-900 dark:text-white">Sewa: ${formatRupiah(item.price_rent)}${item.price_rent > 0 ? ' /hari' : ''}</p>` : ''}
+                    </div>
                 </div>
-                <div class="absolute top-2 left-2 z-10 flex space-x-1">
-                    ${item.is_available_for_rent ? `<span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-md">Sewa</span>` : ''}
-                    ${item.is_available_for_sell ? `<span class="bg-green-500 text-white text-xs px-2 py-1 rounded-md">Jual</span>` : ''}
-                </div>
-                <h3 class="mt-4 text-sm text-gray-700">${item.name || 'Unnamed Item'}</h3>
-                ${item.is_available_for_sell ? `<p class="mt-1 text-lg font-medium text-gray-900">Jual: ${formatRupiah(item.price_sell)}</p>` : ''}
-                ${item.is_available_for_rent ? `<p class="${item.is_available_for_sell ? 'mt-0' : 'mt-1'} text-lg font-medium text-gray-900">Sewa: ${formatRupiah(item.price_rent)}${item.price_rent > 0 ? ' /hari' : ''}</p>` : ''}
-            </a>
+            </div>
         `).join('');
     }
 }

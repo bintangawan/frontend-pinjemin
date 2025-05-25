@@ -82,7 +82,7 @@ class MyItemsPage extends HTMLElement {
     render() {
         // Struktur HTML untuk halaman Item Saya
         this.innerHTML = `
-            <div class="container mx-auto px-4 py-8">
+            <div class="container mx-auto px-4 py-8 font-opensan">
                 <h2 class="text-2xl font-bold mb-4">Item Saya (Toko Saya)</h2>
 
                 <!-- Form untuk Menambah Item Baru -->
@@ -90,28 +90,28 @@ class MyItemsPage extends HTMLElement {
                     <h3 class="text-xl font-semibold mb-4">Tambah Item Baru</h3>
                     <form id="add-item-form" class="space-y-4">
                         <div>
-                            <label for="item-name" class="block text-sm font-medium text-gray-700">Nama Item <span class="text-red-500">*</span></label>
-                            <input type="text" id="item-name" name="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <label for="item-name" class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold">Nama Item <span class="text-red-500">*</span></label>
+                            <input type="text" id="item-name" name="name" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                         </div>
                          <div>
-                            <label for="item-category" class="block text-sm font-medium text-gray-700">Kategori (Opsional)</label>
+                            <label for="item-category" class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold">Kategori (Opsional)</label>
                         
-                            <input type="number" id="item-category" name="category_id" placeholder="Masukkan ID Kategori" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <input type="number" id="item-category" name="category_id" placeholder="Masukkan ID Kategori" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                         </div>
                         <div>
-                            <label for="item-description" class="block text-sm font-medium text-gray-700">Deskripsi (Opsional)</label>
-                            <textarea id="item-description" name="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
+                            <label for="item-description" class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold">Deskripsi (Opsional)</label>
+                            <textarea id="item-description" name="description" rows="3" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></textarea>
                         </div>
 
                          <!-- Harga Jual dan Sewa -->
                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div>
-                                 <label for="item-price-sell" class="block text-sm font-medium text-gray-700">Harga Jual (Opsional)</label>
-                                 <input type="number" id="item-price-sell" name="price_sell" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                 <label for="item-price-sell" class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold">Harga Jual (Opsional)</label>
+                                 <input type="number" id="item-price-sell" name="price_sell" step="0.01" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                              </div>
                              <div>
-                                 <label for="item-price-rent" class="block text-sm font-medium text-gray-700">Harga Sewa (Opsional)</label>
-                                 <input type="number" id="item-price-rent" name="price_rent" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                 <label for="item-price-rent" class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold">Harga Sewa (Opsional)</label>
+                                 <input type="number" id="item-price-rent" name="price_rent" step="0.01" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                              </div>
                          </div>
 
@@ -119,48 +119,54 @@ class MyItemsPage extends HTMLElement {
                          <div class="flex items-center space-x-4">
                              <div class="flex items-center">
                                  <input id="item-available-sell" name="is_available_for_sell" type="checkbox" value="true" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                 <label for="item-available-sell" class="ml-2 block text-sm text-gray-900">Tersedia untuk Dijual</label>
+                                 <label for="item-available-sell" class="ml-2 block text-sm text-gray-900 font-opensan">Tersedia untuk Dijual</label>
                              </div>
                              <div class="flex items-center">
                                  <input id="item-available-rent" name="is_available_for_rent" type="checkbox" value="true" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                 <label for="item-available-rent" class="ml-2 block text-sm text-gray-900">Tersedia untuk Disewa</label>
+                                 <label for="item-available-rent" class="ml-2 block text-sm text-gray-900 font-opensan">Tersedia untuk Disewa</label>
                              </div>
                          </div>
 
                           <!-- Deposit Amount (hanya jika bisa disewa) -->
                          <div id="deposit-field" class="hidden">
-                             <label for="item-deposit" class="block text-sm font-medium text-gray-700">Jumlah Deposit (Opsional)</label>
-                              <input type="number" id="item-deposit" name="deposit_amount" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                             <label for="item-deposit" class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold">Jumlah Deposit (Opsional)</label>
+                              <input type="number" id="item-deposit" name="deposit_amount" step="0.01" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                          </div>
 
 
-                         <!-- Wilayah -->
-                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div>
-                                 <label for="item-province" class="block text-sm font-medium text-gray-700">Provinsi (Opsional)</label>
-                                 <select id="item-province" name="province_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                      <option value="">Select Province</option>
-                                    
-                                  </select>
-                             </div>
-                             <div>
-                                 <label for="item-city" class="block text-sm font-medium text-gray-700">Kota/Kabupaten (Opsional)</label>
-                                 <select id="item-city" name="city_id" disabled class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                     <option value="">Select City</option>
-                                   
-                                  </select>
-                             </div>
-                         </div>
+                        <!-- Wilayah -->
+                           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                   <!-- Added font-montserrat font-bold for label -->
+                                  <label for="item-province" class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold">Provinsi (Opsional)</label>
+                                   <!-- Added styling classes for select -->
+                                  <select id="edit-item-province" name="province_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                                       <option value="">Select Province</option>
 
-                         <!-- Upload Foto -->
-                          <div>
-                              <label for="item-photos" class="block text-sm font-medium text-gray-700">Foto Item (Opsional, Multiple)</label>
-                             <input type="file" id="item-photos" name="photos" multiple accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                   </select>
+                              </div>
+                              <div>
+                                   <!-- Added font-montserrat font-bold for label -->
+                                  <label for="item-city" class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold">Kota/Kabupaten (Opsional)</label>
+                                   <!-- Added styling classes for select -->
+                                  <select id="edit-item-city" name="city_id" disabled class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                                      <option value="">Select City</option>
+
+                                   </select>
+                              </div>
                           </div>
+
+                          <!-- Upload Foto Baru -->
+                           <div>
+                                <!-- Updated label styling -->
+                               <label class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold" for="edit-item-photos">Foto Item Baru (Opsional, Multiple)</label>
+                               <!-- Updated input file styling -->
+                               <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" id="edit-item-photos" name="photos" multiple accept="image/*" type="file">
+                           </div>
 
 
                         <div>
-                            <button type="submit" class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                            <button type="submit" class="flex w-full justify-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                             Tambah Item
                         </button>
                         </div>
@@ -686,25 +692,25 @@ class MyItemsPage extends HTMLElement {
                     switch (item.status) {
                         case 'available':
                             statusDisplay = 'Available';
-                            statusColorClass = 'text-green-600 bg-green-100 px-2 py-0.5 rounded-full text-xs font-semibold'; // Green badge
+                            statusColorClass = 'text-green-600 bg-green-100 px-2 py-0.5 rounded-full text-xs font-semibold font-opensan'; // Green badge, added font-opensan
                             break;
                         case 'rented':
                             statusDisplay = 'Rented';
-                            statusColorClass = 'text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full text-xs font-semibold'; // Yellow badge
+                            statusColorClass = 'text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full text-xs font-semibold font-opensan'; // Yellow badge, added font-opensan
                             break;
                         case 'sold':
                             statusDisplay = 'Sold';
-                            statusColorClass = 'text-red-600 bg-red-100 px-2 py-0.5 rounded-full text-xs font-semibold'; // Red badge
+                            statusColorClass = 'text-red-600 bg-red-100 px-2 py-0.5 rounded-full text-xs font-semibold font-opensan'; // Red badge, added font-opensan
                             break;
                         default:
                             statusDisplay = item.status || 'Unknown Status';
-                            statusColorClass = 'text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full text-xs font-semibold'; // Default gray badge
+                            statusColorClass = 'text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full text-xs font-semibold font-opensan'; // Default gray badge, added font-opensan
                     }
 
 
                     // Buat elemen HTML untuk setiap item
                     const itemElement = document.createElement('div');
-                    itemElement.classList.add('mt-4', 'p-6', 'bg-white', 'rounded-lg', 'shadow-md'); // Added container styling
+                    itemElement.classList.add('mt-4', 'p-6', 'bg-gray-800', 'rounded-lg', 'shadow-md', 'text-white');
                     // Tambahkan data-item-id ke itemElement juga untuk memudahkan akses ID dari handler delegasi jika diperlukan
                     // itemElement.dataset.itemId = item.id; // Not strictly needed here, buttons have it
 
@@ -716,16 +722,16 @@ class MyItemsPage extends HTMLElement {
                          <div class="flex items-center mb-2 md:mb-0 w-full md:w-auto">
                              ${item.thumbnail ? `<img src="http://localhost:5000${item.thumbnail}" alt="Thumbnail ${item.name}" class="w-16 h-16 object-cover rounded mr-4">` : ''}
                             <div>
-                                <h4 class="text-lg font-semibold">${item.name} <span class="${statusColorClass}">${statusDisplay}</span></h4>
-                                <p class="text-sm text-gray-600">${item.description || 'Tidak ada deskripsi'}</p>
-                                 <p class="text-sm text-gray-600">Kategori: ${item.category_name || '-'}</p>
-                                <p class="text-sm text-gray-600">Lokasi: ${item.city_name || '-'}, ${item.province_name || '-'}</p>
+                                <h4 class="text-lg font-montserrat font-bold">${item.name} <span class="${statusColorClass}">${statusDisplay}</span></h4>
+                                <p class="text-sm text-white font-opensan">${item.description || 'Tidak ada deskripsi'}</p>
+                                <p class="text-sm text-white font-opensan">Kategori: ${item.category_name || '-'}</p>
+                                <p class="text-sm text-white font-opensan">Lokasi: ${item.city_name || '-'}, ${item.province_name || '-'}</p>
                             </div>
                          </div>
-                         <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mt-2 md:mt-0">
-                             <p class="text-sm font-medium text-gray-700">Jual: ${item.price_sell ? 'Rp ' + parseFloat(item.price_sell).toLocaleString('id-ID') : '-'}</p>
-                              <p class="text-sm font-medium text-gray-700">Sewa: ${item.price_rent ? 'Rp ' + parseFloat(item.price_rent).toLocaleString('id-ID') + '/hari' : '-'}</p>
-                               ${item.is_available_for_rent ? `<p class="text-sm font-medium text-gray-700">Deposit: ${item.deposit_amount ? 'Rp ' + parseFloat(item.deposit_amount).toLocaleString('id-ID') : '-'}</p>` : ''}
+                         <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mt-2 md:mt-0 font-opensan">
+                             <p class="text-sm font-semibold text-white">${item.price_sell ? 'Jual: Rp ' + parseFloat(item.price_sell).toLocaleString('id-ID') : '-'}</p>
+                              <p class="text-sm font-semibold text-white">${item.price_rent ? 'Sewa: Rp ' + parseFloat(item.price_rent).toLocaleString('id-ID') + '/hari' : '-'}</p>
+                               ${item.is_available_for_rent ? `<p class="text-sm font-semibold text-white">${item.deposit_amount ? 'Deposit: Rp ' + parseFloat(item.deposit_amount).toLocaleString('id-ID') : '-'}</p>` : ''}
                          </div>
                         <div class="flex space-x-2 mt-4 md:mt-0">
 
@@ -740,7 +746,7 @@ class MyItemsPage extends HTMLElement {
                     itemListDiv.appendChild(itemElement);
                 });
             } else {
-                itemListDiv.innerHTML = '<p>Anda belum memiliki item yang diposting.</p>';
+                itemListDiv.innerHTML = '<p class="text-gray-700 font-opensan">Anda belum memiliki item yang diposting.</p>'; // Adjusted message styling
             }
         }
     }
