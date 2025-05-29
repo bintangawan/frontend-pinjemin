@@ -140,7 +140,7 @@ class MyItemsPage extends HTMLElement {
                                    <!-- Added font-montserrat font-bold for label -->
                                   <label for="item-province" class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold">Provinsi (Opsional)</label>
                                    <!-- Added styling classes for select -->
-                                  <select id="edit-item-province" name="province_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                                  <select id="item-province" name="province_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
                                        <option value="">Select Province</option>
 
                                    </select>
@@ -149,7 +149,7 @@ class MyItemsPage extends HTMLElement {
                                    <!-- Added font-montserrat font-bold for label -->
                                   <label for="item-city" class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold">Kota/Kabupaten (Opsional)</label>
                                    <!-- Added styling classes for select -->
-                                  <select id="edit-item-city" name="city_id" disabled class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                                  <select id="item-city" name="city_id" disabled class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
                                       <option value="">Select City</option>
 
                                    </select>
@@ -159,9 +159,9 @@ class MyItemsPage extends HTMLElement {
                           <!-- Upload Foto Baru -->
                            <div>
                                 <!-- Updated label styling -->
-                               <label class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold" for="edit-item-photos">Foto Item Baru (Opsional, Multiple)</label>
+                               <label class="block mb-2 text-sm font-medium text-gray-900 font-montserrat font-bold" for="item-photos">Foto Item Baru (Opsional, Multiple)</label>
                                <!-- Updated input file styling -->
-                               <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" id="edit-item-photos" name="photos" multiple accept="image/*" type="file">
+                               <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" id="item-photos" name="photos" multiple accept="image/*" type="file">
                            </div>
 
 
@@ -426,64 +426,100 @@ class MyItemsPage extends HTMLElement {
         const form = event.target;
         const formData = new FormData(form);
 
-        // Handle boolean values for checkboxes explicitly
-        const availableSellCheckbox = form.querySelector('#item-available-sell');
-        const availableRentCheckbox = form.querySelector('#item-available-rent');
+        // --- Handle Optional Fields (Delete if empty) ---
 
-        formData.delete('is_available_for_sell');
-        formData.delete('is_available_for_rent');
-        formData.append('is_available_for_sell', availableSellCheckbox.checked ? 'true' : 'false');
-        formData.append('is_available_for_rent', availableRentCheckbox.checked ? 'true' : 'false');
-
-        // Handle deposit_amount visibility based on is_available_for_rent checkbox
-        const depositInput = form.querySelector('#item-deposit');
-        if (!availableRentCheckbox.checked || !depositInput.value) {
-            formData.delete('deposit_amount'); // Hapus jika tidak disewa atau input deposit kosong
-        } else {
-            // Ensure deposit is a valid number string if available for rent and value exists
-            // No need to append if already there, but conversion might be needed by backend
-            // FormData sends string, backend should parse.
+        // category_id (input number)
+        const categoryInput = this.querySelector('#item-category');
+        if (!categoryInput || !categoryInput.value) {
+            formData.delete('category_id');
         }
+        // else: FormData akan otomatis mengambil nilai jika ada
 
 
-        // Pastikan price_sell, price_rent, dikirim sebagai angka atau null/undefined jika kosong
+        // price_sell (input number)
         const priceSellInput = form.querySelector('#item-price-sell');
+        if (!priceSellInput || !priceSellInput.value) { // Check for null/undefined input element OR empty value
+            formData.delete('price_sell');
+        }
+        // else: FormData akan otomatis mengambil nilai jika ada
+
+
+        // price_rent (input number)
         const priceRentInput = form.querySelector('#item-price-rent');
-
-        if (!priceSellInput.value) formData.delete('price_sell');
-        if (!priceRentInput.value) formData.delete('price_rent');
-
-
-        // --- Handle category_id ---
-        const categoryInput = form.querySelector('#item-category');
-        if (!categoryInput.value) {
-            formData.delete('category_id'); // Hapus category_id jika input kosong
+        if (!priceRentInput || !priceRentInput.value) { // Check for null/undefined input element OR empty value
+            formData.delete('price_rent');
         }
-        // --- End Tambahan Category ---
+        // else: FormData akan otomatis mengambil nilai jika ada
+
+        // deposit_amount (input number) - Hanya relevan jika disewa
+        const availableRentCheckbox = form.querySelector('#item-available-rent');
+        const depositInput = form.querySelector('#item-deposit');
+        // Delete deposit_amount if checkbox is not checked OR deposit input is empty
+        if (!availableRentCheckbox || !availableRentCheckbox.checked || !depositInput || !depositInput.value) {
+            formData.delete('deposit_amount');
+        }
+        // else: FormData akan otomatis mengambil nilai jika availableRentCheckbox.checked dan depositInput.value ada
 
 
-        // --- Handle province_id, province_name, city_id, city_name ---
+        // province_id (select)
         const provinceSelect = this.querySelector('#item-province');
+        if (!provinceSelect || !provinceSelect.value) { // Check for null/undefined select OR empty value
+            formData.delete('province_id');
+            formData.delete('province_name'); // Hapus juga name jika ID kosong
+        }
+        // else: FormData akan otomatis mengambil nilai province_id jika dipilih
+        // province_name akan dihandle di blok if(selectedProvinceOption && selectedProvinceOption.value) di bawah
+
+
+        // city_id (select)
         const citySelect = this.querySelector('#item-city');
-
-        const selectedProvinceOption = provinceSelect.options[provinceSelect.selectedIndex];
-        const selectedCityOption = citySelect.options[citySelect.selectedIndex];
-
-        formData.delete('province_id');
-        formData.delete('province_name');
-        formData.delete('city_id');
-        formData.delete('city_name');
-
-        if (selectedProvinceOption && selectedProvinceOption.value) {
-            formData.append('province_id', selectedProvinceOption.value);
-            formData.append('province_name', selectedProvinceOption.textContent);
+        if (!citySelect || !citySelect.value) { // Check for null/undefined select OR empty value
+            formData.delete('city_id');
+            formData.delete('city_name'); // Hapus juga name jika ID kosong
         }
+        // else: FormData akan otomatis mengambil nilai city_id jika dipilih
+        // city_name akan dihandle di blok if(selectedCityOption && selectedCityOption.value) di bawah
 
-        if (selectedCityOption && selectedCityOption.value) {
-            formData.append('city_id', selectedCityOption.value);
-            formData.append('city_name', selectedCityOption.textContent);
-        }
-        // --- End Handle Wilayah ---
+        // is_available_for_sell & is_available_for_rent (checkboxes)
+        const availableSellCheckbox = form.querySelector('#item-available-sell');
+
+        // Tetap kirim boolean eksplisit (string "true"/"false") seperti sebelumnya
+        // FormData otomatis menangani name="is_available_for_sell" dan name="is_available_for_rent" dari checkboxes
+        // jika name="is_available_for_sell" dan name="is_available_for_rent" ada pada input checkbox, FormData
+        // akan menambahkan 'is_available_for_sell': 'true'/'false' berdasarkan atribut value="true" dan checked status
+        // Hapus jika backend hanya mau field ini ada saat true? Dokumentasi bilang 'true'/'false' values, jadi biarkan saja FormData menanganinya.
+        // Let's ensure they are explicitly set based on checked state just to be safe, similar to previous attempt.
+        formData.set('is_available_for_sell', availableSellCheckbox && availableSellCheckbox.checked ? 'true' : 'false');
+        formData.set('is_available_for_rent', availableRentCheckbox && availableRentCheckbox.checked ? 'true' : 'false');
+
+
+        // photos (input file)
+        // FormData otomatis menangani input type="file" dengan name="photos".
+        // Jika tidak ada file dipilih, field 'photos' tidak akan ada di FormData, yang sesuai untuk opsional.
+
+        // --- End Handle Optional Fields ---
+
+
+        // --- Handle province_name and city_name from selected options ---
+        // Karena kita menghapus province_name/city_name jika ID kosong di atas,
+        // kita hanya perlu menambahkannya kembali jika ID dipilih dan ada opsi yang dipilih
+        let selectedProvinceOption = null;
+        if (provinceSelect && provinceSelect.selectedIndex !== -1 && provinceSelect.value) {
+            selectedProvinceOption = provinceSelect.options[provinceSelect.selectedIndex];
+            if (selectedProvinceOption && selectedProvinceOption.textContent) {
+                formData.set('province_name', selectedProvinceOption.textContent);
+            }
+        } // else: province_name was deleted if province_id was empty/not selected
+
+        let selectedCityOption = null;
+        if (citySelect && citySelect.selectedIndex !== -1 && citySelect.value) {
+            selectedCityOption = citySelect.options[citySelect.selectedIndex];
+            if (selectedCityOption && selectedCityOption.textContent) {
+                formData.set('city_name', selectedCityOption.textContent);
+            }
+        } // else: city_name was deleted if city_id was empty/not selected
+        // --- End Handle Province/City Names ---
+
 
         console.log('Sending new item FormData:');
         for (let pair of formData.entries()) {
@@ -492,7 +528,7 @@ class MyItemsPage extends HTMLElement {
 
         try {
             // Gunakan apiFormDataRequest dengan method 'POST'
-            const result = await apiFormDataRequest('POST', '/items', formData); // <<< Use apiFormDataRequest
+            const result = await apiFormDataRequest('POST', '/items', formData);
 
             if (result.status === 'success') {
                 console.log('Item added successfully:', result.data.item);
