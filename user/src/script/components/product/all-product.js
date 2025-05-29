@@ -7,9 +7,6 @@ class AllProduct extends HTMLElement {
         this.items = [];
         this.isLoading = true;
         this.error = null;
-        this.itemBasedRecommendations = [];
-        this.isLoadingItemBasedRecommendations = false;
-        this.itemBasedRecommendationsError = null;
         this.searchRecommendations = [];
         this.isLoadingSearchRecommendations = false;
         this.searchRecommendationsError = null;
@@ -17,14 +14,12 @@ class AllProduct extends HTMLElement {
 
         this.fetchItems = this.fetchItems.bind(this);
         this.handleSearchEvent = this.handleSearchEvent.bind(this);
-        this.fetchItemBasedRecommendations = this.fetchItemBasedRecommendations.bind(this);
         this.fetchSearchRecommendations = this.fetchSearchRecommendations.bind(this);
     }
 
     connectedCallback() {
         this.render();
         this.fetchItems();
-        this.fetchItemBasedRecommendations();
 
         document.addEventListener('search', this.handleSearchEvent);
         console.log('AllProduct component: Added search event listener on document.');
@@ -56,6 +51,7 @@ class AllProduct extends HTMLElement {
     async fetchItems(params = {}) {
         this.isLoading = true;
         this.error = null;
+        this.items = [];
         this.render();
 
         try {
@@ -75,49 +71,18 @@ class AllProduct extends HTMLElement {
                 this.items = Array.isArray(result.data) ? result.data : [];
                 this.isLoading = false;
                 this.error = null;
+
             } else {
+                console.error('Failed to fetch items (API error):', result.message || 'Unknown error', result);
                 this.items = [];
-                this.error = result.message || 'Failed to fetch items.';
+                this.error = result.message || 'Gagal memuat item.';
                 this.isLoading = false;
-                console.error('API error fetching items:', result);
             }
         } catch (error) {
             console.error('Error fetching items:', error);
             this.items = [];
-            this.error = 'An error occurred while fetching items.';
+            this.error = error.message || 'Terjadi kesalahan saat memuat item.';
             this.isLoading = false;
-        } finally {
-            this.render();
-        }
-    }
-
-    async fetchItemBasedRecommendations() {
-        this.isLoadingItemBasedRecommendations = true;
-        this.itemBasedRecommendationsError = null;
-        this.render();
-
-        const placeholderProductId = 1;
-        const topN = 5;
-
-        try {
-            console.log(`Fetching Item Based recommendations for product ID: ${placeholderProductId} using ML API.`);
-            const result = await fetchItemRecommendations(placeholderProductId, topN);
-            console.log('Fetched Item Based recommendations:', result);
-
-            if (result && Array.isArray(result.recommendations)) {
-                this.itemBasedRecommendations = result.recommendations;
-                this.isLoadingItemBasedRecommendations = false;
-            } else {
-                this.itemBasedRecommendations = [];
-                this.itemBasedRecommendationsError = 'Failed to fetch Item Based recommendations.';
-                this.isLoadingItemBasedRecommendations = false;
-                console.error('ML API error fetching Item Based recommendations:', result);
-            }
-        } catch (error) {
-            console.error('Error fetching Item Based recommendations from ML API:', error);
-            this.itemBasedRecommendations = [];
-            this.itemBasedRecommendationsError = error.message || 'An error occurred while fetching Item Based recommendations.';
-            this.isLoadingItemBasedRecommendations = false;
         } finally {
             this.render();
         }
@@ -139,24 +104,53 @@ class AllProduct extends HTMLElement {
         const topN = 5;
 
         try {
-            console.log(`Fetching Search Based recommendations for keyword: "${keyword}" using ML API.`);
-            const result = await fetchSearchRecommendations(keyword, topN);
-            console.log('Fetched Search Based recommendations:', result);
+            console.log(`Fetching initial Search Based recommendations for keyword: "${keyword}" from ML API.`);
+            const mlResult = await fetchSearchRecommendations(keyword, topN);
+            console.log('Fetched initial Search Based recommendations from ML API:', mlResult);
 
-            if (result && Array.isArray(result.recommendations)) {
-                this.searchRecommendations = result.recommendations;
+            if (mlResult && Array.isArray(mlResult.recommendations) && mlResult.recommendations.length > 0) {
+                console.log(`Fetching full details for ${mlResult.recommendations.length} recommended items from main API.`);
+                const recommendationPromises = mlResult.recommendations.map(async (rec) => {
+                    try {
+                        const itemDetailResponse = await apiGet(`/items/${rec.product_id}`);
+                        if (itemDetailResponse.status === 'success' && itemDetailResponse.data) {
+                            return {
+                                ...rec,
+                                ...itemDetailResponse.data
+                            };
+                        } else {
+                            console.warn(`Failed to fetch details for recommended item ID ${rec.product_id}:`, itemDetailResponse.message || 'Unknown error');
+                            return null;
+                        }
+                    } catch (detailError) {
+                        console.error(`Error fetching details for recommended item ID ${rec.product_id}:`, detailError);
+                        return null;
+                    }
+                });
+
+                const results = await Promise.all(recommendationPromises);
+
+                this.searchRecommendations = results.filter(item => item !== null);
+
                 this.isLoadingSearchRecommendations = false;
+
+                if (mlResult.recommendations.length > 0 && this.searchRecommendations.length === 0) {
+                    this.searchRecommendationsError = 'Gagal memuat detail untuk saran pencarian.';
+                } else {
+                    this.searchRecommendationsError = null;
+                }
+
             } else {
                 this.searchRecommendations = [];
-                this.searchRecommendationsError = 'Failed to fetch Search Based recommendations.';
                 this.isLoadingSearchRecommendations = false;
-                console.error('ML API error fetching Search Based recommendations:', result);
+                this.searchRecommendationsError = mlResult.message || 'Tidak ada saran pencarian yang ditemukan dari ML API.';
+                console.warn('ML API returned no search recommendations or invalid data:', mlResult);
             }
         } catch (error) {
-            console.error('Error fetching Search Based recommendations from ML API:', error);
+            console.error('Error during ML API fetch or subsequent detail fetch for search recommendations:', error);
             this.searchRecommendations = [];
-            this.searchRecommendationsError = error.message || 'An error occurred while fetching Search Based recommendations.';
             this.isLoadingSearchRecommendations = false;
+            this.searchRecommendationsError = error.message || 'Terjadi kesalahan saat memuat saran pencarian.';
         } finally {
             this.render();
         }
@@ -168,66 +162,12 @@ class AllProduct extends HTMLElement {
             <div class="py-6">
                 <search-bar></search-bar>
             </div>
-            ${this.renderRecommendationSection()}
             ${this.renderSearchRecommendationsSection()}
             <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8">
                 <h2 class="sr-only">Products</h2>
                 ${this.renderContent()}
             </div>
         </div>
-        `;
-    }
-
-    renderRecommendationSection() {
-        if (this.isLoadingItemBasedRecommendations) {
-            return `
-                 <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-gray-100 rounded-lg shadow-sm mb-8">
-                     <h3 class="text-xl font-montserrat font-bold mb-4 text-gray-900">Produk yang Mungkin Anda Cari (Rekomendasi Item Based)</h3>
-                     <p class="text-gray-700">Memuat rekomendasi...</p>
-                 </div>
-            `;
-        }
-
-        if (this.itemBasedRecommendationsError) {
-            return `
-                  <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-red-100 rounded-lg shadow-sm mb-8 text-red-800">
-                     <h3 class="text-xl font-montserrat font-bold mb-4">Produk yang Mungkin Anda Cari (Rekomendasi Item Based)</h3>
-                      <p>Error memuat rekomendasi: ${this.itemBasedRecommendationsError}</p>
-                  </div>
-             `;
-        }
-
-        if (!this.itemBasedRecommendations || this.itemBasedRecommendations.length === 0) {
-            return '';
-        }
-
-        const recommendationsListHtml = this.itemBasedRecommendations.map(rec => {
-            const formatRupiah = (money) => {
-                if (money === null || money === undefined) return '-';
-                const numericMoney = typeof money === 'string' ? parseFloat(money) : money;
-                if (isNaN(numericMoney)) return '-';
-                return new Intl.NumberFormat('id-ID', {
-                    style: 'currency',
-                    currency: 'IDR',
-                    minimumFractionDigits: 0
-                }).format(numericMoney);
-            }
-            return `
-                <li>
-                     <a href="/#/items/${rec.product_id}" class="text-blue-600 hover:underline">
-                         ${rec.product_name || 'Unnamed Product'} - ${formatRupiah(rec.product_price)} (Rating: ${rec.product_rating || '-'})
-                     </a>
-                </li>
-            `;
-        }).join('');
-
-        return `
-            <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-gray-100 rounded-lg shadow-sm mb-8">
-                <h3 class="text-xl font-montserrat font-bold mb-4 text-gray-900">Produk yang Mungkin Anda Cari (Rekomendasi Item Based)</h3>
-                 <ul class="list-disc list-inside space-y-2">
-                     ${recommendationsListHtml}
-                 </ul>
-            </div>
         `;
     }
 
@@ -238,52 +178,72 @@ class AllProduct extends HTMLElement {
 
         if (this.isLoadingSearchRecommendations) {
             return `
-                 <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-blue-50 rounded-lg shadow-sm mb-8">
-                     <h3 class="text-lg font-montserrat font-semibold mb-3 text-blue-800">Saran Terkait "${this.currentSearchKeyword}"</h3>
-                     <p class="text-blue-700">Memuat saran...</p>
+                 <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-gray-800 rounded-lg shadow-sm mb-8 text-white font-opensan">
+                     <h3 class="text-lg font-montserrat font-semibold mb-3 text-white">Saran Terkait "${this.currentSearchKeyword}"</h3>
+                     <p class="text-gray-300">Memuat saran...</p>
                  </div>
             `;
         }
 
         if (this.searchRecommendationsError) {
             return `
-                  <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-red-100 rounded-lg shadow-sm mb-8 text-red-800">
-                     <h3 class="text-lg font-montserrat font-semibold mb-3">Saran Terkait "${this.currentSearchKeyword}"</h3>
+                  <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-red-800 rounded-lg shadow-sm mb-8 text-white font-opensan">
+                     <h3 class="text-lg font-montserrat font-semibold mb-3 text-white">Saran Terkait "${this.currentSearchKeyword}"</h3>
                       <p>Error memuat saran: ${this.searchRecommendationsError}</p>
                   </div>
              `;
         }
 
         if (!this.searchRecommendations || this.searchRecommendations.length === 0) {
-            return '';
+            return `
+                <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-gray-800 rounded-lg shadow-sm mb-8 text-white font-opensan">
+                    <h3 class="text-lg font-montserrat font-semibold mb-3 text-white">Saran Terkait "${this.currentSearchKeyword}"</h3>
+                    <p class="text-gray-300">Tidak ada saran yang ditemukan.</p>
+                </div>
+            `;
+        }
+
+        const backendBaseUrl = 'http://localhost:5000';
+        const formatRupiah = (money) => {
+            if (money === null || money === undefined) return '-';
+            const numericMoney = typeof money === 'string' ? parseFloat(money) : money;
+            if (isNaN(numericMoney)) return '-';
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(numericMoney);
         }
 
         const recommendationsListHtml = this.searchRecommendations.map(rec => {
-            const formatRupiah = (money) => {
-                if (money === null || money === undefined) return '-';
-                const numericMoney = typeof money === 'string' ? parseFloat(money) : money;
-                if (isNaN(numericMoney)) return '-';
-                return new Intl.NumberFormat('id-ID', {
-                    style: 'currency',
-                    currency: 'IDR',
-                    minimumFractionDigits: 0
-                }).format(numericMoney);
-            }
             return `
-                <li>
-                     <a href="/#/items/${rec.product_id}" class="text-blue-600 hover:underline">
-                         ${rec.product_name || 'Unnamed Product'} - ${formatRupiah(rec.product_price)} (Rating: ${rec.product_rating || '-'})
+                <div class="bg-gray-700 rounded-lg shadow-sm p-4 flex-shrink-0 w-64 text-white">
+                     <a href="/#/items/${rec.id || rec.product_id}" class="block text-white">
+                         <div class="flex items-center space-x-3 mb-3">
+                             ${rec.thumbnail ? `<img src="${backendBaseUrl}${rec.thumbnail}" alt="${rec.name || 'Product image'}" class="w-16 h-16 object-cover rounded">` : '<div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center text-xs text-gray-400">No Img</div>'}
+                            <div class="flex-grow">
+                                <h5 class="text-base font-montserrat font-bold mb-1 truncate">${rec.name || rec.product_name || 'Unnamed Product'}</h5>
+                                <div class="flex items-center space-x-1">
+                                    ${rec.is_available_for_rent ? `<span class="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-md font-opensan">Sewa</span>` : ''}
+                                    ${rec.is_available_for_sell ? `<span class="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-md font-opensan">Jual</span>` : ''}
+                                </div>
+                            </div>
+                         </div>
+                         <div class="space-y-1 border-t border-gray-600 pt-3">
+                            ${rec.is_available_for_sell ? `<p class="text-sm font-opensan font-semibold">Jual: ${formatRupiah(rec.price_sell)}</p>` : ''}
+                             ${rec.is_available_for_rent ? `<p class="text-sm font-opensan font-semibold">Sewa: ${formatRupiah(rec.price_rent)}${rec.price_rent > 0 ? ' /hari' : ''}</p>` : ''}
+                         </div>
                      </a>
-                </li>
-            `;
+                 </div>
+             `;
         }).join('');
 
         return `
-            <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-blue-50 rounded-lg shadow-sm mb-8">
-                <h3 class="text-lg font-montserrat font-semibold mb-3 text-blue-800">Saran Terkait "${this.currentSearchKeyword}"</h3>
-                 <ul class="list-disc list-inside space-y-2 text-blue-700">
+            <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-gray-800 rounded-lg shadow-sm mb-8 font-opensan">
+                <h3 class="text-lg font-montserrat font-semibold mb-3 text-white">Saran Terkait "${this.currentSearchKeyword}"</h3>
+                 <div class="flex overflow-x-auto space-x-4 pb-4 hide-scrollbar">
                      ${recommendationsListHtml}
-                 </ul>
+                 </div>
             </div>
         `;
     }

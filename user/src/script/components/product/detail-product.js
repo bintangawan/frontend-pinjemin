@@ -1,6 +1,6 @@
 import { apiGet, apiPost, authenticatedRequest } from '../../utils/apiService.js';
 import Utils from '../../utils/utils.js';
-import { fetchUserRecommendations } from '../../utils/mlApiService.js';
+import { fetchUserRecommendations, fetchItemRecommendations } from '../../utils/mlApiService.js';
 
 class DetailProduct extends HTMLElement {
     constructor() {
@@ -18,6 +18,9 @@ class DetailProduct extends HTMLElement {
         this.userBasedRecommendations = [];
         this.isLoadingUserBasedRecommendations = false;
         this.userBasedRecommendationsError = null;
+        this.itemBasedRecommendations = [];
+        this.isLoadingItemBasedRecommendations = false;
+        this.itemBasedRecommendationsError = null;
 
         this.handleReviewSubmit = this.handleReviewSubmit.bind(this);
         this.handleBuy = this.handleBuy.bind(this);
@@ -26,6 +29,7 @@ class DetailProduct extends HTMLElement {
         this.handleRentFormSubmit = this.handleRentFormSubmit.bind(this);
         this.cancelRentForm = this.cancelRentForm.bind(this);
         this.fetchUserBasedRecommendations = this.fetchUserBasedRecommendations.bind(this);
+        this.fetchItemBasedRecommendationsForCurrentItem = this.fetchItemBasedRecommendationsForCurrentItem.bind(this);
     }
 
     set itemId(id) {
@@ -106,6 +110,10 @@ class DetailProduct extends HTMLElement {
         this._showRentForm = false;
         this._userReviewId = null;
 
+        this.itemBasedRecommendations = [];
+        this.isLoadingItemBasedRecommendations = false;
+        this.itemBasedRecommendationsError = null;
+
         this.renderContent();
 
         try {
@@ -114,6 +122,8 @@ class DetailProduct extends HTMLElement {
             if (itemResponse.status === 'success' && itemResponse.data) {
                 this._item = itemResponse.data;
                 console.log('Fetched item details:', this._item);
+
+                this.fetchItemBasedRecommendationsForCurrentItem(this._item.id);
 
                 const reviewsResponse = await apiGet(`/reviews/item/${itemId}`);
 
@@ -180,7 +190,10 @@ class DetailProduct extends HTMLElement {
             isLoggedIn: Utils.isAuthenticated(),
             editingReviewId: this._editingReviewId,
             showRentForm: this._showRentForm,
-            userReviewId: this._userReviewId
+            userReviewId: this._userReviewId,
+            hasItemBasedRecommendations: this.itemBasedRecommendations.length > 0,
+            isLoadingItemBasedRecommendations: this.isLoadingItemBasedRecommendations,
+            itemBasedRecommendationsError: this.itemBasedRecommendationsError
         });
 
         this.innerHTML = '';
@@ -189,13 +202,15 @@ class DetailProduct extends HTMLElement {
         const reviewsSectionHtml = this.renderReviewsSection();
         const rentFormHtml = this.renderRentForm();
         const userBasedRecommendationsHtml = this.renderUserBasedRecommendations();
+        const itemBasedRecommendationsHtml = this.renderItemBasedRecommendations();
 
         this.innerHTML = `
         <div class="container mx-auto px-4 py-8">
             ${itemDetailsHtml}
             ${rentFormHtml}
-            ${reviewsSectionHtml}
             ${userBasedRecommendationsHtml}
+            ${itemBasedRecommendationsHtml}
+            ${reviewsSectionHtml}
         </div>
         `;
         this.setupEventListeners();
@@ -255,10 +270,10 @@ class DetailProduct extends HTMLElement {
                             
                             <!-- Foto Lainnya -->
                             <div class="flex flex-wrap gap-4">
-                                ${item.photos.slice(1).map(photo => 
-                                    `<img src="http://localhost:5000${photo}" alt="${item.name}" 
+                                ${item.photos.slice(1).map(photo =>
+            `<img src="http://localhost:5000${photo}" alt="${item.name}" 
                                         class="w-full md:w-1/3 h-64 object-cover rounded-md cursor-pointer hover:opacity-75">`
-                                ).join('')}
+        ).join('')}
                             </div>
                             
                             <!-- Deskripsi di bawah foto -->
@@ -274,11 +289,11 @@ class DetailProduct extends HTMLElement {
                             ${item.is_available_for_sell ? `<button id="buy-button" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold">Beli</button>` : ''}
                             ${item.is_available_for_rent ? `<button id="rent-button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold">Sewa</button>` : ''}
                         </div>
-                    ` : isOwner && item.status === 'available' ? 
-                        `<p class="mt-6 text-gray-600">Anda adalah pemilik item ini.</p>`
-                        : item.status !== 'available' ? 
-                            `<p class="mt-6 text-gray-600">Item ini saat ini tidak tersedia.</p>`
-                            : ''}
+                    ` : isOwner && item.status === 'available' ?
+                `<p class="mt-6 text-gray-600">Anda adalah pemilik item ini.</p>`
+                : item.status !== 'available' ?
+                    `<p class="mt-6 text-gray-600">Item ini saat ini tidak tersedia.</p>`
+                    : ''}
                 </div>
 
                 <!-- Informasi Lain -->
@@ -493,26 +508,114 @@ class DetailProduct extends HTMLElement {
         }
 
         if (!this.userBasedRecommendations || this.userBasedRecommendations.length === 0) {
-            return '';
+            return `
+                <div class="bg-gray-800 text-white shadow-md rounded-lg p-6 mt-8 mb-8 font-opensan">
+                    <h3 class="text-xl font-montserrat font-bold mb-4 text-white">Produk yang Anda Sukai (Rekomendasi User Based)</h3>
+                    <p class="text-gray-300">Tidak ada rekomendasi user based yang tersedia saat ini.</p>
+                </div>
+            `;
         }
 
+        const backendBaseUrl = 'http://localhost:5000';
+        const formatRupiah = this.formatRupiah;
+
         const recommendationsListHtml = this.userBasedRecommendations.map(rec => {
-            const formatRupiah = this.formatRupiah;
             return `
-                <li>
-                    <a href="/#/items/${rec.product_id}" class="text-blue-400 hover:underline">
-                        ${rec.product_name || 'Unnamed Product'} - ${formatRupiah(rec.product_price)} (Rating: ${rec.product_rating || '-'})
+                <div class="bg-gray-700 text-white p-4 rounded-md shadow-sm flex-shrink-0 w-64">
+                    <a href="/#/items/${rec.id || rec.product_id}" class="block">
+                        <div class="flex items-center space-x-3 mb-3">
+                             ${rec.thumbnail ? `<img src="${backendBaseUrl}${rec.thumbnail}" alt="${rec.name || 'Product image'}" class="w-16 h-16 object-cover rounded">` : '<div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center text-xs text-gray-400">No Img</div>'}
+                            <div class="flex-grow">
+                                <h5 class="text-base font-montserrat font-bold mb-1 truncate">${rec.name || rec.product_name || 'Unnamed Product'}</h5>
+                                <div class="flex items-center space-x-1">
+                                    ${rec.is_available_for_rent ? `<span class="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-md font-opensan">Sewa</span>` : ''}
+                                    ${rec.is_available_for_sell ? `<span class="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-md font-opensan">Jual</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-1 border-t border-gray-600 pt-3">
+                           ${rec.is_available_for_sell ? `<p class="text-sm font-opensan font-semibold">Jual: ${formatRupiah(rec.price_sell)}</p>` : ''}
+                            ${rec.is_available_for_rent ? `<p class="text-sm font-opensan font-semibold">Sewa: ${formatRupiah(rec.price_rent)}${rec.price_rent > 0 ? ' /hari' : ''}</p>` : ''}
+                        </div>
                     </a>
-                </li>
+                </div>
             `;
         }).join('');
 
         return `
             <div class="bg-gray-800 text-white shadow-md rounded-lg p-6 mt-8 mb-8 font-opensan">
                 <h3 class="text-xl font-montserrat font-bold mb-4 text-white">Produk yang Anda Sukai (Rekomendasi User Based)</h3>
-                <ul class="list-disc list-inside space-y-2">
+                <div class="flex overflow-x-auto space-x-4 pb-4 hide-scrollbar">
                     ${recommendationsListHtml}
-                </ul>
+                </div>
+            </div>
+        `;
+    }
+
+    renderItemBasedRecommendations() {
+        if (this.isLoading || this.error || !this._item) {
+            return '';
+        }
+
+        if (this.isLoadingItemBasedRecommendations) {
+            return `
+                 <div class="bg-white shadow-md rounded-lg p-6 mt-8 mb-8 font-opensan">
+                     <h3 class="text-xl font-montserrat font-bold mb-4 text-gray-900">Produk Serupa Lainnya (Rekomendasi Item Based)</h3>
+                      <p class="text-gray-700">Memuat rekomendasi serupa...</p>
+                 </div>
+            `;
+        }
+
+        if (this.itemBasedRecommendationsError) {
+            return `
+                  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-8 mb-8" role="alert">
+                     <strong class="font-bold">Error!</strong>
+                      <span class="block sm:inline">${this.itemBasedRecommendationsError}</span>
+                  </div>
+             `;
+        }
+
+        if (!this.itemBasedRecommendations || this.itemBasedRecommendations.length === 0) {
+            return `
+                <div class="bg-white shadow-md rounded-lg p-6 mt-8 mb-8 font-opensan">
+                    <h3 class="text-xl font-montserrat font-bold mb-4 text-gray-900">Produk Serupa Lainnya (Rekomendasi Item Based)</h3>
+                    <p class="text-gray-700">Tidak ada rekomendasi serupa yang tersedia saat ini.</p>
+                </div>
+            `;
+        }
+
+        const backendBaseUrl = 'http://localhost:5000';
+        const formatRupiah = this.formatRupiah;
+
+        const recommendationsListHtml = this.itemBasedRecommendations.map(rec => {
+            return `
+                <div class="bg-gray-100 rounded-lg shadow-sm p-4 flex-shrink-0 w-64">
+                     <a href="/#/items/${rec.id || rec.product_id}" class="block text-gray-900">
+                         <div class="flex items-center space-x-3 mb-3">
+                             ${rec.thumbnail ? `<img src="${backendBaseUrl}${rec.thumbnail}" alt="${rec.name || 'Product image'}" class="w-16 h-16 object-cover rounded">` : '<div class="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-600">No Img</div>'}
+                            <div class="flex-grow">
+                                <h5 class="text-base font-montserrat font-bold mb-1 truncate">${rec.name || rec.product_name || 'Unnamed Product'}</h5>
+                                <div class="flex items-center space-x-1">
+                                    ${rec.is_available_for_rent ? `<span class="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-md font-opensan">Sewa</span>` : ''}
+                                    ${rec.is_available_for_sell ? `<span class="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-md font-opensan">Jual</span>` : ''}
+                                </div>
+                            </div>
+                         </div>
+                         <div class="space-y-1 border-t border-gray-300 pt-3">
+                            ${rec.is_available_for_sell ? `<p class="text-sm font-opensan font-semibold">Jual: ${formatRupiah(rec.price_sell)}</p>` : ''}
+                             ${rec.is_available_for_rent ? `<p class="text-sm font-opensan font-semibold">Sewa: ${formatRupiah(rec.price_rent)}${rec.price_rent > 0 ? ' /hari' : ''}</p>` : ''}
+                         </div>
+                     </a>
+                 </div>
+             `;
+        }).join('');
+
+        return `
+            <div class="bg-white shadow-md rounded-lg p-6 mt-8 mb-8 font-opensan">
+                <h3 class="text-xl font-montserrat font-bold mb-4 text-gray-900">Produk Serupa Lainnya (Rekomendasi Item Based)</h3>
+                 <div class="flex overflow-x-auto space-x-4 pb-4 hide-scrollbar">
+                     ${recommendationsListHtml}
+                 </div>
             </div>
         `;
     }
@@ -982,13 +1085,11 @@ class DetailProduct extends HTMLElement {
 
     async fetchUserBasedRecommendations() {
         const currentUser = Utils.getUserInfo();
-
-        if (!currentUser || !currentUser.id) {
-            console.log('User not logged in, skipping User Based recommendations fetch.');
+        if (!currentUser || !currentUser.id || this.isLoading || this.error || !this._item) {
+            console.log("Skipping User Based Recommendations fetch: User not logged in, or item not loaded, or loading/error state.");
             this.userBasedRecommendations = [];
             this.isLoadingUserBasedRecommendations = false;
             this.userBasedRecommendationsError = null;
-            this.renderContent();
             return;
         }
 
@@ -999,24 +1100,128 @@ class DetailProduct extends HTMLElement {
         const topN = 5;
 
         try {
-            console.log(`Fetching User Based recommendations for user ID: ${currentUser.id} using ML API.`);
-            const result = await fetchUserRecommendations(currentUser.id, topN);
-            console.log('Fetched User Based recommendations:', result);
+            console.log(`Fetching initial User Based recommendations for user ID: ${currentUser.id} from ML API.`);
+            const mlResult = await fetchUserRecommendations(currentUser.id, topN);
+            console.log('Fetched initial User Based recommendations from ML API:', mlResult);
 
-            if (result && Array.isArray(result.recommendations)) {
-                this.userBasedRecommendations = result.recommendations;
+            if (mlResult && Array.isArray(mlResult.recommendations) && mlResult.recommendations.length > 0) {
+                console.log(`Fetching full details for ${mlResult.recommendations.length} recommended items from main API.`);
+                const recommendationPromises = mlResult.recommendations.map(async (rec) => {
+                    try {
+                        const itemDetailResponse = await apiGet(`/items/${rec.product_id}`);
+                        if (itemDetailResponse.status === 'success' && itemDetailResponse.data) {
+                            return {
+                                ...rec,
+                                ...itemDetailResponse.data
+                            };
+                        } else {
+                            console.warn(`Failed to fetch details for recommended item ID ${rec.product_id}:`, itemDetailResponse.message || 'Unknown error');
+                            return null;
+                        }
+                    } catch (detailError) {
+                        console.error(`Error fetching details for recommended item ID ${rec.product_id}:`, detailError);
+                        return null;
+                    }
+                });
+
+                const results = await Promise.all(recommendationPromises);
+
+                this.userBasedRecommendations = results.filter(item => item !== null);
+
                 this.isLoadingUserBasedRecommendations = false;
+
+                if (mlResult.recommendations.length > 0 && this.userBasedRecommendations.length === 0) {
+                    this.userBasedRecommendationsError = 'Gagal memuat detail untuk rekomendasi.';
+                } else {
+                    this.userBasedRecommendationsError = null;
+                }
+
             } else {
                 this.userBasedRecommendations = [];
-                this.userBasedRecommendationsError = 'Failed to fetch User Based recommendations.';
                 this.isLoadingUserBasedRecommendations = false;
-                console.error('ML API error fetching User Based recommendations:', result);
+                this.userBasedRecommendationsError = mlResult.message || 'Tidak ada rekomendasi yang ditemukan dari ML API.';
+                console.warn('ML API returned no recommendations or invalid data:', mlResult);
             }
+
         } catch (error) {
-            console.error('Error fetching User Based recommendations from ML API:', error);
+            console.error('Error during ML API fetch or subsequent detail fetch:', error);
             this.userBasedRecommendations = [];
-            this.userBasedRecommendationsError = error.message || 'An error occurred while fetching User Based recommendations.';
             this.isLoadingUserBasedRecommendations = false;
+            this.userBasedRecommendationsError = error.message || 'Terjadi kesalahan saat memuat rekomendasi.';
+        } finally {
+            this.renderContent();
+        }
+    }
+
+    async fetchItemBasedRecommendationsForCurrentItem(basedOnItemId) {
+        if (!basedOnItemId) {
+            console.log('No item ID provided to base Item Based recommendations on in DetailProduct.');
+            this.itemBasedRecommendations = [];
+            this.isLoadingItemBasedRecommendations = false;
+            this.itemBasedRecommendationsError = null;
+            this.renderContent();
+            return;
+        }
+
+        this.isLoadingItemBasedRecommendations = true;
+        this.itemBasedRecommendationsError = null;
+        this.renderContent();
+
+        const topN = 5;
+
+        try {
+            console.log(`Fetching Item Based recommendations for product ID: ${basedOnItemId} from ML API in DetailProduct.`);
+            const mlResult = await fetchItemRecommendations(basedOnItemId, topN);
+            console.log('Fetched Item Based recommendations from ML API in DetailProduct:', mlResult);
+
+            if (mlResult && Array.isArray(mlResult.recommendations) && mlResult.recommendations.length > 0) {
+                console.log(`Fetching full details for ${mlResult.recommendations.length} recommended items from main API in DetailProduct.`);
+                const recommendationPromises = mlResult.recommendations.map(async (rec) => {
+                    try {
+                        const itemDetailResponse = await apiGet(`/items/${rec.product_id}`);
+                        if (itemDetailResponse.status === 'success' && itemDetailResponse.data) {
+                            return {
+                                ...rec,
+                                ...itemDetailResponse.data
+                            };
+                        } else {
+                            console.warn(`Failed to fetch details for recommended item ID ${rec.product_id} in DetailProduct:`, itemDetailResponse.message || 'Unknown error');
+                            return null;
+                        }
+                    } catch (detailError) {
+                        console.error(`Error fetching details for recommended item ID ${rec.product_id} in DetailProduct:`, detailError);
+                        return null;
+                    }
+                });
+
+                const results = await Promise.all(recommendationPromises);
+
+                this.itemBasedRecommendations = results.filter(item => item !== null && item.id !== this._item.id);
+
+                this.isLoadingItemBasedRecommendations = false;
+
+                if (mlResult.recommendations.length > 0 && this.itemBasedRecommendations.length === 0) {
+                    if (mlResult.recommendations.length > 0) {
+                        this.itemBasedRecommendationsError = 'Tidak ada rekomendasi serupa yang ditemukan atau detail gagal dimuat.';
+                    } else {
+                        this.itemBasedRecommendationsError = 'Tidak ada rekomendasi serupa yang ditemukan dari ML API.';
+                    }
+                } else {
+                    this.itemBasedRecommendationsError = null;
+                }
+
+            } else {
+                this.itemBasedRecommendations = [];
+                this.isLoadingItemBasedRecommendations = false;
+                this.itemBasedRecommendationsError = mlResult.message || 'Tidak ada rekomendasi serupa yang ditemukan dari ML API.';
+                console.warn('ML API returned no recommendations or invalid data in DetailProduct:', mlResult);
+            }
+
+        } catch (error) {
+            console.error('Error during ML API fetch or subsequent detail fetch for item-based recommendations in DetailProduct:', error);
+            this.itemBasedRecommendations = [];
+            this.isLoadingItemBasedRecommendations = false;
+            this.itemBasedRecommendationsError = error.message || 'Terjadi kesalahan saat memuat rekomendasi serupa.';
         } finally {
             this.renderContent();
         }

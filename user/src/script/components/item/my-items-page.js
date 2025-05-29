@@ -533,9 +533,28 @@ class MyItemsPage extends HTMLElement {
             if (result.status === 'success') {
                 console.log('Item added successfully:', result.data.item);
                 alert('Item berhasil ditambahkan!');
-                // Setelah berhasil menambah, kembali ke form tambah dan refresh list
-                this.showAddForm(); // Reset form tambah dan sembunyikan form edit
-                this.fetchUserItems(); // Refresh daftar item pengguna
+
+                // --- TAMBAHKAN INI ---
+                console.log('Triggering ML backend data refresh...');
+                try {
+                    // Gunakan fetch atau fungsi helper ML API jika ada
+                    await fetch('http://localhost:5001/api/refresh_data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Tidak perlu auth token jika endpoint refresh tidak butuh auth
+                        },
+                        body: JSON.stringify({}) // Body kosong sesuai dokumentasi refresh_data
+                    });
+                    console.log('ML backend data refresh triggered.');
+                } catch (refreshError) {
+                    console.warn('Failed to trigger ML backend data refresh:', refreshError);
+                    // Mungkin tampilkan pesan ke user atau log saja, refresh gagal tidak menghentikan fungsionalitas utama
+                }
+                // --- AKHIR TAMBAHAN ---
+
+                this.showAddForm();
+                this.fetchUserItems();
             } else {
                 console.error('Failed to add item (API error):', result.message, result.errors);
                 // Coba tampilkan error validasi spesifik jika ada
@@ -1006,7 +1025,26 @@ class MyItemsPage extends HTMLElement {
             if (result.status === 'success') {
                 console.log('Item updated successfully:', result.data);
                 alert('Item berhasil diperbarui!');
-                // Setelah berhasil update, kembali ke form tambah dan refresh list
+
+                // --- TAMBAHKAN INI ---
+                console.log('Triggering ML backend data refresh...');
+                try {
+                    // Gunakan fetch atau fungsi helper ML API jika ada
+                    await fetch('http://localhost:5001/api/refresh_data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Tidak perlu auth token jika endpoint refresh tidak butuh auth
+                        },
+                        body: JSON.stringify({}) // Body kosong sesuai dokumentasi refresh_data
+                    });
+                    console.log('ML backend data refresh triggered.');
+                } catch (refreshError) {
+                    console.warn('Failed to trigger ML backend data refresh:', refreshError);
+                    // Mungkin tampilkan pesan ke user atau log saja, refresh gagal tidak menghentikan fungsionalitas utama
+                }
+                // --- AKHIR TAMBAHAN ---
+
                 this.hideEditForm(); // Sembunyikan form edit dan tampilkan form tambah
                 this.fetchUserItems(); // Refresh daftar item pengguna
             } else {
@@ -1038,7 +1076,26 @@ class MyItemsPage extends HTMLElement {
                 if (result.status === 'success') {
                     console.log('Item deleted successfully:', result);
                     alert('Item berhasil dihapus!');
-                    // Refresh daftar item setelah sukses menghapus
+
+                    // --- TAMBAHKAN INI ---
+                    console.log('Triggering ML backend data refresh...');
+                    try {
+                        // Gunakan fetch atau fungsi helper ML API jika ada
+                        await fetch('http://localhost:5001/api/refresh_data', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                // Tidak perlu auth token jika endpoint refresh tidak butuh auth
+                            },
+                            body: JSON.stringify({}) // Body kosong sesuai dokumentasi refresh_data
+                        });
+                        console.log('ML backend data refresh triggered.');
+                    } catch (refreshError) {
+                        console.warn('Failed to trigger ML backend data refresh:', refreshError);
+                        // Mungkin tampilkan pesan ke user atau log saja, refresh gagal tidak menghentikan fungsionalitas utama
+                    }
+                    // --- AKHIR TAMBAHAN ---
+
                     this.fetchUserItems(); // <<< REFRESH LIST SETELAH DELETE
                 } else {
                     console.error('Failed to delete item:', result.message);
