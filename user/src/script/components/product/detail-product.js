@@ -1,5 +1,6 @@
 import { apiGet, apiPost, authenticatedRequest } from '../../utils/apiService.js';
 import Utils from '../../utils/utils.js';
+import { fetchUserRecommendations } from '../../utils/mlApiService.js';
 
 class DetailProduct extends HTMLElement {
     constructor() {
@@ -14,6 +15,9 @@ class DetailProduct extends HTMLElement {
         this._editingReviewId = null;
         this._showRentForm = false;
         this._userReviewId = null;
+        this.userBasedRecommendations = [];
+        this.isLoadingUserBasedRecommendations = false;
+        this.userBasedRecommendationsError = null;
 
         this.handleReviewSubmit = this.handleReviewSubmit.bind(this);
         this.handleBuy = this.handleBuy.bind(this);
@@ -21,6 +25,7 @@ class DetailProduct extends HTMLElement {
         this._handleHashChange = this.handleHashChange.bind(this);
         this.handleRentFormSubmit = this.handleRentFormSubmit.bind(this);
         this.cancelRentForm = this.cancelRentForm.bind(this);
+        this.fetchUserBasedRecommendations = this.fetchUserBasedRecommendations.bind(this);
     }
 
     set itemId(id) {
@@ -33,6 +38,7 @@ class DetailProduct extends HTMLElement {
             this.renderContent();
             if (this._itemId) {
                 this.fetchItemAndReviews(this._itemId);
+                this.fetchUserBasedRecommendations();
             } else {
                 this.error = 'ID Item tidak valid.';
                 this.isLoading = false;
@@ -49,6 +55,7 @@ class DetailProduct extends HTMLElement {
         if (this._itemId) {
             this.renderContent();
             this.fetchItemAndReviews(this._itemId);
+            this.fetchUserBasedRecommendations();
         }
         window.addEventListener('hashchange', this._handleHashChange);
     }
@@ -181,12 +188,14 @@ class DetailProduct extends HTMLElement {
         const itemDetailsHtml = this.renderItemDetails();
         const reviewsSectionHtml = this.renderReviewsSection();
         const rentFormHtml = this.renderRentForm();
+        const userBasedRecommendationsHtml = this.renderUserBasedRecommendations();
 
         this.innerHTML = `
         <div class="container mx-auto px-4 py-8">
             ${itemDetailsHtml}
             ${rentFormHtml}
             ${reviewsSectionHtml}
+            ${userBasedRecommendationsHtml}
         </div>
         `;
         this.setupEventListeners();
@@ -438,6 +447,55 @@ class DetailProduct extends HTMLElement {
                          </button>
                     </div>
                 </form>
+            </div>
+        `;
+    }
+
+    renderUserBasedRecommendations() {
+        const currentUser = Utils.getUserInfo();
+        if (!currentUser || !currentUser.id || this.isLoading || this.error || !this._item) {
+            return '';
+        }
+
+        if (this.isLoadingUserBasedRecommendations) {
+            return `
+                <div class="bg-gray-800 text-white shadow-md rounded-lg p-6 mt-8 mb-8 font-opensan">
+                    <h3 class="text-xl font-montserrat font-bold mb-4 text-white">Produk yang Anda Sukai (Rekomendasi User Based)</h3>
+                    <p class="text-gray-300">Memuat rekomendasi...</p>
+                </div>
+            `;
+        }
+
+        if (this.userBasedRecommendationsError) {
+            return `
+                <div class="bg-red-800 text-white shadow-md rounded-lg p-6 mt-8 mb-8 font-opensan">
+                    <h3 class="text-xl font-montserrat font-bold mb-4 text-white">Produk yang Anda Sukai (Rekomendasi User Based)</h3>
+                    <p>Error memuat rekomendasi: ${this.userBasedRecommendationsError}</p>
+                </div>
+            `;
+        }
+
+        if (!this.userBasedRecommendations || this.userBasedRecommendations.length === 0) {
+            return '';
+        }
+
+        const recommendationsListHtml = this.userBasedRecommendations.map(rec => {
+            const formatRupiah = this.formatRupiah;
+            return `
+                <li>
+                    <a href="/#/items/${rec.product_id}" class="text-blue-400 hover:underline">
+                        ${rec.product_name || 'Unnamed Product'} - ${formatRupiah(rec.product_price)} (Rating: ${rec.product_rating || '-'})
+                    </a>
+                </li>
+            `;
+        }).join('');
+
+        return `
+            <div class="bg-gray-800 text-white shadow-md rounded-lg p-6 mt-8 mb-8 font-opensan">
+                <h3 class="text-xl font-montserrat font-bold mb-4 text-white">Produk yang Anda Sukai (Rekomendasi User Based)</h3>
+                <ul class="list-disc list-inside space-y-2">
+                    ${recommendationsListHtml}
+                </ul>
             </div>
         `;
     }
@@ -903,6 +961,48 @@ class DetailProduct extends HTMLElement {
         const numericMoney = typeof money === 'string' ? parseFloat(money) : money;
         if (isNaN(numericMoney)) return '-';
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(numericMoney);
+    }
+
+    async fetchUserBasedRecommendations() {
+        const currentUser = Utils.getUserInfo();
+
+        if (!currentUser || !currentUser.id) {
+            console.log('User not logged in, skipping User Based recommendations fetch.');
+            this.userBasedRecommendations = [];
+            this.isLoadingUserBasedRecommendations = false;
+            this.userBasedRecommendationsError = null;
+            this.renderContent();
+            return;
+        }
+
+        this.isLoadingUserBasedRecommendations = true;
+        this.userBasedRecommendationsError = null;
+        this.renderContent();
+
+        const topN = 5;
+
+        try {
+            console.log(`Fetching User Based recommendations for user ID: ${currentUser.id} using ML API.`);
+            const result = await fetchUserRecommendations(currentUser.id, topN);
+            console.log('Fetched User Based recommendations:', result);
+
+            if (result && Array.isArray(result.recommendations)) {
+                this.userBasedRecommendations = result.recommendations;
+                this.isLoadingUserBasedRecommendations = false;
+            } else {
+                this.userBasedRecommendations = [];
+                this.userBasedRecommendationsError = 'Failed to fetch User Based recommendations.';
+                this.isLoadingUserBasedRecommendations = false;
+                console.error('ML API error fetching User Based recommendations:', result);
+            }
+        } catch (error) {
+            console.error('Error fetching User Based recommendations from ML API:', error);
+            this.userBasedRecommendations = [];
+            this.userBasedRecommendationsError = error.message || 'An error occurred while fetching User Based recommendations.';
+            this.isLoadingUserBasedRecommendations = false;
+        } finally {
+            this.renderContent();
+        }
     }
 }
 
