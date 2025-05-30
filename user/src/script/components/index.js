@@ -9,3 +9,4 @@ import './item/my-items-page';
 import './transaction/my-transactions-page';
 import './transaction/detail-transaction-page';
 import './transaction/my-seller-transactions-page';
+import './community/community';

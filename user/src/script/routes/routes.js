@@ -7,6 +7,7 @@ import Utils from '../utils/utils.js';
 import MyTransactionsPage from '../components/transaction/my-transactions-page.js';
 import MySellerTransactionsPage from '../components/transaction/my-seller-transactions-page.js';
 import DetailTransactionPage from '../components/transaction/detail-transaction-page.js';
+import Community from '../components/community/community.js';
 
 const checkAuthenticated = (mainContent, renderFn, ...args) => {
     if (Utils.isAuthenticated()) {
@@ -62,4 +63,7 @@ export const routes = {
     '/my-sales': (mainContent) => checkAuthenticated(mainContent, (mc) => {
         mc.innerHTML = '<my-seller-transactions-page></my-seller-transactions-page>';
     }),
+    '/community': (mainContent) => {
+        mainContent.innerHTML = '<app-community></app-community>';
+    },
 };
