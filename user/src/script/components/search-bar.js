@@ -1,154 +1,371 @@
-// import Products from '../data/local/product.js'; // Hapus import dummy data
-// import { apiGet } from '../../utils/apiService.js'; // Hapus import apiGet karena tidak fetch kategori lagi
-
 class SearchBar extends HTMLElement {
-    constructor() {
-        super();
-        this.shadow = this.attachShadow({ mode: 'open' });
-        // this.categories = []; // Hapus state categories
-        // this.fetchCategories = this.fetchCategories.bind(this); // Hapus bind fetchCategories
-        // this.populateCategories = this.populateCategories.bind(this); // Hapus bind populateCategories
-        // this.populateTypes = this.populateTypes.bind(this); // Tidak perlu populateTypes lagi
-        this.setupEventListeners = this.setupEventListeners.bind(this); // Tetap bind setupEventListeners
-    }
+  constructor() {
+    super()
+    this.shadow = this.attachShadow({ mode: "open" })
+    this.setupEventListeners = this.setupEventListeners.bind(this)
+  }
 
-    connectedCallback() {
-        this.render();
-        // this.fetchCategories(); // Hapus panggilan fetchCategories
-    }
+  connectedCallback() {
+    this.render()
+  }
 
-    render() {
-        this.shadow.innerHTML = `
+  render() {
+    this.shadow.innerHTML = `
             <style>
-                /* Styling tetap sama, sesuaikan jika Anda menggunakan framework CSS */
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+                @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+                
                 :host {
                     display: block;
-                    width: 100%; /* Pastikan komponen mengambil lebar penuh containernya */
+                    width: 100%;
+                    font-family: 'Poppins', sans-serif;
                 }
+                
                 .search-container {
-                     display: flex; /* Menggunakan flexbox untuk mensejajarkan input dan button */
-                     gap: 8px; /* Jarak antar elemen */
-                     align-items: center; /* Tengahkan elemen secara vertikal */
-                     max-width: 50em; /* Mengambil lebar penuh dari parent */
-                     margin: 0 auto; /* Pusatkan container search bar */
-                     padding: 0 1rem; /* Tambahkan padding horizontal agar konten tidak menempel tepi */
-                 }
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 0 1rem;
+                    position: relative;
+                }
 
-                 .search-input {
-                     flex-grow: 1; /* Input mengambil ruang kosong yang tersedia */
-                      padding: 0.5rem; /* p-2.5 */
-                      font-size: 0.875rem; /* text-sm */
-                      color: #1f2937; /* text-gray-900 */
-                      background-color: #f9fafb; /* bg-gray-50 */
-                      border: 1px solid #d1d5db; /* border border-gray-300 */
-                      border-radius: 0.375rem; /* rounded-md */
-                      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-                      outline: none;
-                 }
-                 .search-input:focus {
-                      border-color: #6366f1; /* focus:border-blue-500 */
-                      box-shadow: 0 0 0 1px #6366f1; /* focus:ring focus:ring-blue-500 (simulasi ring) */
-                 }
+                .search-input-wrapper {
+                    flex-grow: 1;
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                }
 
-                /* Hapus styling untuk select karena sudah dihapus */
-                /* .search-select { ... } */
-                /* .search-select:focus { ... } */
+                .search-input {
+                    width: 100%;
+                    padding: 14px 20px 14px 50px;
+                    font-size: 16px;
+                    font-weight: 400;
+                    color: #334155;
+                    background: linear-gradient(135deg, #ffffff, #f8fafc);
+                    border: 2px solid #e2e8f0;
+                    border-radius: 16px;
+                    outline: none;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                    font-family: 'Poppins', sans-serif;
+                }
+
+                .search-input::placeholder {
+                    color: #94a3b8;
+                    font-weight: 400;
+                }
+
+                .search-input:focus {
+                    border-color: #6366f1;
+                    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), 0 8px 24px rgba(0, 0, 0, 0.1);
+                    transform: translateY(-2px);
+                    background: #ffffff;
+                }
+
+                .search-input:hover {
+                    border-color: #cbd5e1;
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+                }
+
+                .search-icon {
+                    position: absolute;
+                    left: 18px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #64748b;
+                    font-size: 18px;
+                    pointer-events: none;
+                    transition: all 0.3s ease;
+                    z-index: 1;
+                }
+
+                .search-input:focus + .search-icon {
+                    color: #6366f1;
+                    transform: translateY(-50%) scale(1.1);
+                }
 
                 .search-button {
-                    background-color: #3b82f6; /* bg-blue-500 */
-                    color: white; /* text-white */
-                    font-weight: 700; /* font-bold */
-                    padding: 0.5rem 1rem; /* Sesuaikan padding agar terlihat seimbang dengan input */
-                    border-radius: 0.375rem; /* rounded-md */
-                    font-size: 0.875rem; /* text-sm */
+                    background: linear-gradient(135deg, #6366f1, #4f46e5);
+                    color: white;
+                    font-weight: 600;
+                    padding: 14px 20px;
+                    border-radius: 16px;
+                    font-size: 18px;
                     cursor: pointer;
                     border: none;
                     outline: none;
-                    transition: background-color 0.2s ease-in-out;
-                     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+                    font-family: 'Poppins', sans-serif;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-width: 56px;
+                    height: 56px;
                 }
+
                 .search-button:hover {
-                    background-color: #2563eb; /* hover:bg-blue-700 */
+                    background: linear-gradient(135deg, #4f46e5, #4338ca);
+                    transform: translateY(-3px);
+                    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
                 }
+
+                .search-button:active {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+                }
+
                 .search-button:focus {
-                     box-shadow: 0 0 0 2px #bfdbfe, 0 0 0 4px #93c5fd; /* focus:ring focus:ring-blue-500 (simulasi) */
+                    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2), 0 8px 20px rgba(99, 102, 241, 0.4);
                 }
 
-                /* Dark mode styles jika diperlukan */
-                /* @media (prefers-color-scheme: dark) { ... } */
+                .search-button-icon {
+                    font-size: 18px;
+                    transition: transform 0.3s ease;
+                }
 
+                .search-button:hover .search-button-icon {
+                    transform: scale(1.2);
+                }
+
+                /* Responsive Design */
+                @media (max-width: 640px) {
+                    .search-container {
+                        gap: 8px;
+                        padding: 0 0.5rem;
+                    }
+
+                    .search-input {
+                        padding: 12px 16px 12px 44px;
+                        font-size: 14px;
+                        border-radius: 12px;
+                    }
+
+                    .search-icon {
+                        left: 14px;
+                        font-size: 16px;
+                    }
+
+                    .search-button {
+                        padding: 12px 16px;
+                        font-size: 16px;
+                        border-radius: 12px;
+                        min-width: 48px;
+                        height: 48px;
+                    }
+
+                    .search-button-icon {
+                        font-size: 16px;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .search-container {
+                        max-width: 100%;
+                        padding: 0 0.25rem;
+                        gap: 6px;
+                    }
+
+                    .search-input {
+                        padding: 10px 14px 10px 40px;
+                        font-size: 14px;
+                    }
+
+                    .search-icon {
+                        left: 12px;
+                        font-size: 14px;
+                    }
+
+                    .search-button {
+                        padding: 10px 14px;
+                        font-size: 14px;
+                        min-width: 44px;
+                        height: 44px;
+                    }
+
+                    .search-button-icon {
+                        font-size: 14px;
+                    }
+                }
+
+                /* Animation for loading state */
+                .search-button.loading {
+                    pointer-events: none;
+                    opacity: 0.8;
+                }
+
+                .search-button.loading .search-button-icon {
+                    animation: spin 1s linear infinite;
+                }
+
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+
+                /* Focus visible for accessibility */
+                .search-input:focus-visible,
+                .search-button:focus-visible {
+                    outline: 2px solid #6366f1;
+                    outline-offset: 2px;
+                }
+
+                /* Tooltip for button */
+                .search-button {
+                    position: relative;
+                }
+
+                .search-button::after {
+                    content: 'Cari';
+                    position: absolute;
+                    bottom: -35px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-size: 12px;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.3s ease;
+                    z-index: 1000;
+                }
+
+                .search-button:hover::after {
+                    opacity: 1;
+                }
+
+                @media (max-width: 640px) {
+                    .search-button::after {
+                        display: none;
+                    }
+                }
             </style>
             <div class="search-container">
-                <input type="text" class="search-input" placeholder="Cari item berdasarkan nama...">
-                <!-- Hapus select kategori -->
-                <!-- Hapus select tipe -->
-                 <!-- Hapus select harga -->
-                <button class="search-button">Cari</button>
+                <div class="search-input-wrapper">
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        placeholder="Cari produk yang Anda inginkan..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                </div>
+                <button class="search-button" type="button" aria-label="Cari produk" title="Cari">
+                    <i class="fa-solid fa-magnifying-glass search-button-icon"></i>
+                </button>
             </div>
-        `;
+        `
 
-        this.setupEventListeners();
-        // populateCategories tidak lagi dipanggil di sini
-        // this.populateTypes(); // Populate static types immediately
+    this.setupEventListeners()
+  }
+
+  setupEventListeners() {
+    const searchInput = this.shadow.querySelector(".search-input")
+    const searchButton = this.shadow.querySelector(".search-button")
+
+    // Check if elements exist
+    if (!searchInput || !searchButton) {
+      console.error("Search elements not found")
+      return
     }
 
-    // Hapus method fetchCategories
-    // async fetchCategories() { ... }
+    const performSearch = () => {
+      try {
+        const searchTerm = searchInput.value ? searchInput.value.trim() : ""
+        const searchParams = {}
 
-    // Hapus method populateCategories
-    // populateCategories() { ... }
+        // Hanya tambahkan parameter 'search' jika searchTerm tidak kosong
+        if (searchTerm) {
+          searchParams.search = searchTerm
+        }
 
-    // Hapus method populateTypes
-    // populateTypes() { ... }
+        console.log("Dispatching search event with params:", searchParams)
 
-    setupEventListeners() {
-        const searchInput = this.shadow.querySelector('.search-input');
-        // Hapus variabel untuk select yang sudah dihapus
-        // const categorySelect = this.shadow.querySelector('#categorySelect');
-        // const priceSelect = this.shadow.querySelector('#priceSelect');
-        // const typeSelect = this.shadow.querySelector('#typeSelect');
-        const searchButton = this.shadow.querySelector('.search-button');
+        // Add loading state
+        searchButton.classList.add("loading")
 
+        // Remove loading state after a short delay
+        setTimeout(() => {
+          searchButton.classList.remove("loading")
+        }, 1000)
 
-        const performSearch = () => {
-            const searchTerm = searchInput.value.trim();
-            // Hapus variabel untuk nilai select yang sudah dihapus
-            // const categoryId = categorySelect ? categorySelect.value : '';
-            // const priceSortOrder = priceSelect.value;
-            // const itemType = typeSelect.value;
-
-            const searchParams = {};
-
-            // Hanya tambahkan parameter 'search' jika searchTerm tidak kosong
-            if (searchTerm) {
-                searchParams.search = searchTerm;
-            }
-            // Hapus logika penambahan parameter untuk kategori, tipe, dan sorting
-            // if (categoryId) { ... }
-            // if (itemType === 'beli') { ... } else if (itemType === 'sewa') { ... }
-            // if (priceSortOrder) { ... }
-
-
-            console.log('Dispatching search event with params:', searchParams);
-
-            this.dispatchEvent(new CustomEvent('search', {
-                bubbles: true,
-                composed: true,
-                detail: {
-                    params: searchParams
-                }
-            }));
-        };
-
-        searchButton.addEventListener('click', performSearch);
-
-        searchInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                performSearch();
-            }
-        });
+        this.dispatchEvent(
+          new CustomEvent("search", {
+            bubbles: true,
+            composed: true,
+            detail: {
+              params: searchParams,
+            },
+          }),
+        )
+      } catch (error) {
+        console.error("Error in performSearch:", error)
+        searchButton.classList.remove("loading")
+      }
     }
+
+    searchButton.addEventListener("click", performSearch)
+
+    searchInput.addEventListener("keypress", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault()
+        performSearch()
+      }
+    })
+
+    // Focus functionality
+    searchInput.addEventListener("focus", () => {
+      try {
+        searchInput.select()
+      } catch (error) {
+        console.error("Error in focus event:", error)
+      }
+    })
+  }
+
+  // Method to clear search
+  clearSearch() {
+    try {
+      const searchInput = this.shadow.querySelector(".search-input")
+      if (searchInput) {
+        searchInput.value = ""
+        searchInput.focus()
+      }
+    } catch (error) {
+      console.error("Error in clearSearch:", error)
+    }
+  }
+
+  // Method to set search value
+  setSearchValue(value) {
+    try {
+      const searchInput = this.shadow.querySelector(".search-input")
+      if (searchInput && typeof value === "string") {
+        searchInput.value = value
+      }
+    } catch (error) {
+      console.error("Error in setSearchValue:", error)
+    }
+  }
+
+  // Method to get current search value
+  getSearchValue() {
+    try {
+      const searchInput = this.shadow.querySelector(".search-input")
+      return searchInput && searchInput.value ? searchInput.value.trim() : ""
+    } catch (error) {
+      console.error("Error in getSearchValue:", error)
+      return ""
+    }
+  }
 }
 
-customElements.define('search-bar', SearchBar);
+customElements.define("search-bar", SearchBar)

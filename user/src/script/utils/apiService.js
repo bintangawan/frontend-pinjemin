@@ -20,6 +20,15 @@ const clearAuthData = () => {
     alert('Sesi Anda telah berakhir. Silakan login kembali.'); // Beri tahu pengguna
 };
 
+const setAuthData = (token, user) => {
+    localStorage.setItem("token", token)
+    localStorage.setItem("user", JSON.stringify(user))
+  
+    // Dispatch login event
+    console.log("Dispatching userLoggedIn event...")
+    window.dispatchEvent(new CustomEvent("userLoggedIn"))
+  }
+
 /**
  * Melakukan permintaan terautentikasi ke API backend (dengan JSON body).
  * @param {string} endpoint - Endpoint API (misal '/auth/me').
@@ -174,5 +183,58 @@ const apiFormDataRequest = async (method, endpoint, formData) => {
     }
 };
 
+/**
+ * Subscribe to push notifications
+ * @param {Object} subscription - Push subscription object
+ * @returns {Promise<Object>} - Response from API
+ */
+export const subscribeNotification = (subscription) => {
+    return apiPost('/notifications/subscribe', subscription);
+  };
+  
+  /**
+   * Unsubscribe from push notifications
+   * @param {string} endpoint - Subscription endpoint
+   * @returns {Promise<Object>} - Response from API
+   */
+  export const unsubscribeNotification = (endpoint) => {
+    return apiPost('/notifications/unsubscribe', { endpoint });
+  };
+  
+  /**
+   * Get unread notification count
+   * @returns {Promise<Object>} - Response from API with unread count
+   */
+  export const getUnreadNotificationCount = () => {
+    return apiGet('/notifications/unread-count');
+  };
+  
+  /**
+   * Get user notifications
+   * @param {number} page - Page number
+   * @param {number} limit - Number of notifications per page
+   * @returns {Promise<Object>} - Response from API with notifications
+   */
+  export const getNotifications = (page = 1, limit = 10) => {
+    return apiGet(`/notifications?page=${page}&limit=${limit}`);
+  };
+  
+  /**
+   * Mark notification as read
+   * @param {number} id - Notification ID
+   * @returns {Promise<Object>} - Response from API
+   */
+  export const markNotificationAsRead = (id) => {
+    return apiPatch(`/notifications/${id}/read`);
+  };
+  
+  /**
+   * Mark all notifications as read
+   * @returns {Promise<Object>} - Response from API
+   */
+  export const markAllNotificationsAsRead = () => {
+    return apiPatch('/notifications/read-all');
+  };
+
 // Export semua fungsi yang tersedia dalam satu statement kolektif di akhir file
-export { apiGet, apiPost, apiPatch, apiDelete, clearAuthData, apiFormDataRequest, authenticatedRequest };
+export { apiGet, apiPost, apiPatch, apiDelete, clearAuthData, apiFormDataRequest, setAuthData, authenticatedRequest };

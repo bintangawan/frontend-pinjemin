@@ -9,4 +9,9 @@ import './item/my-items-page';
 import './transaction/my-transactions-page';
 import './transaction/detail-transaction-page';
 import './transaction/my-seller-transactions-page';
-import './community/community';
+import './community/community-page';
+import "./notification-permission-popup.js"
+import "./notification-badge.js"
+import "./notifications-page.js"
+import "./notification-list.js"
+import "./landing/landing-page"

@@ -1,276 +1,607 @@
 class RegisterPage extends HTMLElement {
-    constructor() {
-        super();
-        // Bind methods to the class instance
-        this.fetchProvinces = this.fetchProvinces.bind(this);
-        this.populateProvincesDropdown = this.populateProvincesDropdown.bind(this);
-        this.handleProvinceChange = this.handleProvinceChange.bind(this);
-        this.fetchCitiesByProvinceId = this.fetchCitiesByProvinceId.bind(this);
-        this.populateCitiesDropdown = this.populateCitiesDropdown.bind(this);
-        this.setupFormSubmission = this.setupFormSubmission.bind(this); // Ensure this is also bound
+  constructor() {
+    super()
+    this.isLoading = false
+    // Bind methods to the class instance
+    this.fetchProvinces = this.fetchProvinces.bind(this)
+    this.populateProvincesDropdown = this.populateProvincesDropdown.bind(this)
+    this.handleProvinceChange = this.handleProvinceChange.bind(this)
+    this.fetchCitiesByProvinceId = this.fetchCitiesByProvinceId.bind(this)
+    this.populateCitiesDropdown = this.populateCitiesDropdown.bind(this)
+    this.setupFormSubmission = this.setupFormSubmission.bind(this)
+  }
+
+  _emptyContent() {
+    this.innerHTML = ""
+  }
+
+  connectedCallback() {
+    // Check if user is already logged in
+    const token = localStorage.getItem("token")
+    if (token) {
+      // User is already logged in, redirect to home
+      window.location.href = "/#/home"
+      return
     }
 
-    _emptyContent() {
-        this.innerHTML = "";
+    this.render()
+    this.setupMobileMenuToggle()
+    this.setupFormSubmission()
+    this.fetchProvinces()
+    this.setupProvinceChangeListener()
+  }
+
+  disconnectedCallback() {
+    const provinceSelect = this.querySelector("#province")
+    if (provinceSelect) {
+      provinceSelect.removeEventListener("change", this.handleProvinceChange)
+    }
+    // Remove mobile menu listeners
+    const mobileMenuButton = this.querySelector("#mobile-menu-button")
+    if (mobileMenuButton && this._mobileMenuButtonHandler) {
+      mobileMenuButton.removeEventListener("click", this._mobileMenuButtonHandler)
+      this._mobileMenuButtonHandler = null
     }
 
-    connectedCallback() {
-        this.render();
-        this.setupFormSubmission();
-        this.fetchProvinces(); // Fetch provinces when component is connected
-        this.setupProvinceChangeListener(); // Setup listener for province change
+    // Remove drawer overlay listener
+    if (this._drawerOverlayHandler) {
+      document.removeEventListener("click", this._drawerOverlayHandler)
+      this._drawerOverlayHandler = null
     }
+  }
 
-    // Add disconnectedCallback to clean up event listeners
-    disconnectedCallback() {
-        const provinceSelect = this.querySelector('#province');
-        if (provinceSelect) {
-            provinceSelect.removeEventListener('change', this.handleProvinceChange);
+  setupMobileMenuToggle() {
+    console.log("Setting up mobile drawer toggle...")
+    const mobileMenuButton = this.querySelector("#mobile-menu-button")
+    const mobileDrawer = this.querySelector("#mobile-drawer")
+    const drawerOverlay = this.querySelector("#drawer-overlay")
+    const closeDrawerButton = this.querySelector("#close-drawer-button")
+
+    if (mobileMenuButton && mobileDrawer && drawerOverlay) {
+      console.log("Mobile drawer elements found. Setting up listeners.")
+
+      // Open drawer
+      this._mobileMenuButtonHandler = (event) => {
+        console.log("Mobile menu button clicked.")
+        this.openDrawer()
+      }
+      mobileMenuButton.addEventListener("click", this._mobileMenuButtonHandler)
+
+      // Close drawer via close button
+      if (closeDrawerButton) {
+        closeDrawerButton.addEventListener("click", () => {
+          this.closeDrawer()
+        })
+      }
+
+      // Close drawer via overlay click
+      this._drawerOverlayHandler = (event) => {
+        if (event.target === drawerOverlay) {
+          this.closeDrawer()
         }
+      }
+      drawerOverlay.addEventListener("click", this._drawerOverlayHandler)
+
+      // Close drawer when clicking navigation links
+      const drawerLinks = mobileDrawer.querySelectorAll("a")
+      drawerLinks.forEach((link) => {
+        link.addEventListener("click", () => {
+          console.log("Drawer link clicked, closing drawer.")
+          this.closeDrawer()
+        })
+      })
+
+      // Close drawer on escape key
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !mobileDrawer.classList.contains("-translate-x-full")) {
+          this.closeDrawer()
+        }
+      })
+    } else {
+      console.error("Mobile drawer elements not found:", {
+        mobileMenuButton,
+        mobileDrawer,
+        drawerOverlay,
+      })
     }
+  }
 
-    render() {
-        this._emptyContent(); // Clear previous content
+  openDrawer = () => {
+    const mobileDrawer = this.querySelector("#mobile-drawer")
+    const drawerOverlay = this.querySelector("#drawer-overlay")
 
-        this.innerHTML = `
-            <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
-                <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-                    <img class="mx-auto h-20 w-auto" src="./logo.png" alt="Pinjemin">
-                    <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">Create a New Account</h2>
+    if (mobileDrawer && drawerOverlay) {
+      // Show overlay
+      drawerOverlay.classList.remove("hidden")
+      // Force reflow before adding transform classes for smooth animation
+      drawerOverlay.offsetHeight
+
+      // Slide in drawer
+      mobileDrawer.classList.remove("-translate-x-full")
+
+      // Prevent body scroll when drawer is open
+      document.body.style.overflow = "hidden"
+
+      console.log("Drawer opened")
+    }
+  }
+
+  closeDrawer = () => {
+    const mobileDrawer = this.querySelector("#mobile-drawer")
+    const drawerOverlay = this.querySelector("#drawer-overlay")
+
+    if (mobileDrawer && drawerOverlay) {
+      // Slide out drawer
+      mobileDrawer.classList.add("-translate-x-full")
+
+      // Hide overlay after animation completes
+      setTimeout(() => {
+        drawerOverlay.classList.add("hidden")
+      }, 300) // Match transition duration
+
+      // Restore body scroll
+      document.body.style.overflow = ""
+
+      console.log("Drawer closed")
+    }
+  }
+
+  render() {
+    this._emptyContent()
+
+    this.innerHTML = `
+            <style>
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+            
+            * {
+                font-family: 'Poppins', sans-serif;
+            }
+                .toast-slide-in {
+                    animation: slideIn 0.3s ease-out;
+                }
+                
+                .toast-slide-out {
+                    animation: slideOut 0.3s ease-in;
+                }
+                
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+
+                .form-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 1rem;
+                }
+
+                @media (max-width: 640px) {
+                    .form-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            </style>
+            <!-- Fixed Header -->
+        <div class="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
+            <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+                
+                <!-- Mobile Menu Button (Left) -->
+                <div class="flex items-center md:hidden">
+                    <button id="mobile-menu-button" type="button" class="text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                        <span class="sr-only">Open main menu</span>
+                        <!-- Hamburger icon -->
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
                 </div>
 
-                <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-                    <form id="register-form" class="space-y-6" action="#" method="POST">
+                <!-- Logo (Center on mobile, Left on desktop) -->
+                <div class="flex items-center justify-center md:justify-start flex-1 md:flex-none">
+                    <div class="text-xl font-bold text-gray-800 flex items-center">
+                        <img src="./pinjemin.png" class="mr-2 h-16 inline-block" alt="Pinjemin Logo">
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation (Hidden on mobile) -->
+                <nav class="hidden md:flex items-center space-x-8 flex-1 justify-center">
+                    <a href="/#/" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
+                        Beranda
+                    </a>
+                </nav>
+
+                <!-- Right Section: Auth Links -->
+                <div class="flex items-center space-x-3">
+                    <!-- Authentication Links -->
+                    <div class="auth-links flex items-center space-x-2">
+                        <a href="/#/login" class="text-sm font-medium text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200">
+                            Sign In
+                        </a>
+                        <a href="/#/register" class="text-sm font-medium bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200">
+                            Register
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer Overlay -->
+        <div id="drawer-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden transition-opacity duration-300"></div>
+
+        <!-- Mobile Drawer Menu -->
+        <div id="mobile-drawer" class="fixed top-0 left-0 h-full w-80 bg-white shadow-xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out md:hidden">
+            <!-- Drawer Header -->
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <img src="./pinjemin.png" class="h-8" alt="Pinjemin Logo">
+                    <span class="text-lg font-bold text-gray-800">Pinjemin</span>
+                </div>
+                <button id="close-drawer-button" class="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Drawer Content -->
+            <div class="flex flex-col h-full overflow-y-auto">
+                <!-- Auth Links -->
+                <div class="drawer-auth-links border-b border-gray-200 p-4">
+                    <div class="space-y-3">
+                        <a href="/#/login" class="flex items-center justify-center w-full py-3 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200 font-medium">
+                            Sign In
+                        </a>
+                        <a href="/#/register" class="flex items-center justify-center w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
+                            Register
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="flex-1 px-4 py-4">
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="/#/" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                </svg>
+                                Beranda
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+            
+            <div class="min-h-screen flex items-center justify-center p-4 mt-32">
+                <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg">
+                    <!-- Logo -->
+                    <div class="text-center mb-6">
+                        <img class="mx-auto h-16 w-16 rounded-xl object-cover shadow-lg" src="./pinjemin.png" alt="Pinjemin">
+                        <h2 class="mt-4 text-2xl font-bold text-gray-900">Create Account</h2>
+                        <p class="mt-1 text-sm text-gray-600">Join us and start your journey</p>
+                    </div>
+
+                    <!-- Form -->
+                    <form id="register-form" class="space-y-4">
                         <div>
-                            <label for="name" class="block text-sm/6 font-medium text-gray-900">Name</label>
-                            <div class="mt-2">
-                                <input type="text" name="name" id="name" autocomplete="name" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
-                            </div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <input 
+                                id="name" 
+                                name="name" 
+                                type="text" 
+                                autocomplete="name" 
+                                required 
+                                class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+                                placeholder="Enter your full name"
+                            >
                         </div>
 
                         <div>
-                            <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
-                            <div class="mt-2">
-                                <input type="email" name="email" id="email" autocomplete="email" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
-                            </div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <input 
+                                id="email" 
+                                name="email" 
+                                type="email" 
+                                autocomplete="email" 
+                                required 
+                                class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+                                placeholder="Enter your email"
+                            >
                         </div>
 
-                         <div>
-                            <label for="province" class="block text-sm/6 font-medium text-gray-900">Province</label>
-                            <div class="mt-2">
-                                <select id="province" name="province_name" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                        <div class="form-grid">
+                            <div>
+                                <label for="province" class="block text-sm font-medium text-gray-700 mb-1">Province</label>
+                                <select 
+                                    id="province" 
+                                    name="province_name" 
+                                    required 
+                                    class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+                                >
                                     <option value="">Select Province</option>
                                 </select>
                             </div>
-                        </div>
 
-                         <div>
-                            <label for="city" class="block text-sm/6 font-medium text-gray-900">City</label>
-                            <div class="mt-2">
-                                <select id="city" name="city_name" required disabled class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                            <div>
+                                <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                <select 
+                                    id="city" 
+                                    name="city_name" 
+                                    required 
+                                    disabled 
+                                    class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
                                     <option value="">Select City</option>
                                 </select>
                             </div>
                         </div>
 
                         <div>
-                            <div class="flex items-center justify-between">
-                                <label for="password" class="block text-sm/6 font-medium text-gray-900">Password</label>
-                            </div>
-                            <div class="mt-2">
-                                <input type="password" name="password" id="password" autocomplete="new-password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
-                            </div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input 
+                                id="password" 
+                                name="password" 
+                                type="password" 
+                                autocomplete="new-password" 
+                                required 
+                                class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+                                placeholder="Create a password"
+                            >
                         </div>
-
-                         <div>
-                            <div class="flex items-center justify-between">
-                                <label for="retype-password" class="block text-sm/6 font-medium text-gray-900">Retype Password</label>
-                            </div>
-                            <div class="mt-2">
-                                <input type="password" name="retype-password" id="retype-password" autocomplete="new-password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
-                            </div>
-                        </div>
-
 
                         <div>
-                            <button type="submit" class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Register</button>
+                            <label for="retype-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                            <input 
+                                id="retype-password" 
+                                name="retype-password" 
+                                type="password" 
+                                autocomplete="new-password" 
+                                required 
+                                class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+                                placeholder="Confirm your password"
+                            >
                         </div>
+
+                        <button 
+                            type="submit" 
+                            id="submit-btn"
+                            class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2.5 px-4 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center min-h-[44px]"
+                        >
+                            <span id="btn-content">Create Account</span>
+                        </button>
                     </form>
 
-                    <p class="mt-10 text-center text-sm/6 text-gray-500">
+                    <!-- Login Link -->
+                    <p class="mt-6 text-center text-sm text-gray-600">
                         Already have an account?
-                        <a href="/#/login" class="font-semibold text-indigo-600 hover:text-indigo-500">Sign In now</a>
+                        <a href="/#/login" class="font-semibold text-purple-600 hover:text-purple-500 transition-colors duration-200">Sign in here</a>
                     </p>
                 </div>
             </div>
-        `;
-    }
+            
+            <!-- Toast Container -->
+            <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+        `
+  }
 
-    // Method to fetch provinces from external API
-    async fetchProvinces() {
-        const provinceSelect = this.querySelector('#province');
-        // Clear existing options except the first one
-        provinceSelect.innerHTML = '<option value="">Select Province</option>';
+  showToast(title, message, type = "success") {
+    const toastContainer = this.querySelector("#toast-container")
+    const toast = document.createElement("div")
 
-        try {
-            const response = await fetch('https://kanglerian.my.id/api-wilayah-indonesia/api/provinces.json');
-            const provinces = await response.json();
-            this.populateProvincesDropdown(provinces);
-        } catch (error) {
-            console.error('Error fetching provinces:', error);
-            alert('Failed to load provinces. Please try again later.');
+    const bgColor = type === "success" ? "bg-green-500" : "bg-red-500"
+    const icon = type === "success" ? "✓" : "✕"
+
+    toast.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center min-w-[320px] toast-slide-in`
+
+    toast.innerHTML = `
+            <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-white bg-opacity-20 rounded-full mr-3">
+                <span class="text-sm font-bold">${icon}</span>
+            </div>
+            <div class="flex-1">
+                <div class="font-semibold text-sm">${title}</div>
+                <div class="text-xs opacity-90 mt-1">${message}</div>
+            </div>
+        `
+
+    toastContainer.appendChild(toast)
+
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+      toast.classList.remove("toast-slide-in")
+      toast.classList.add("toast-slide-out")
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast)
         }
-    }
+      }, 300)
+    }, 4000)
+  }
 
-    // Method to populate the province dropdown
-    populateProvincesDropdown(provinces) {
-        const provinceSelect = this.querySelector('#province');
-        if (provinceSelect) {
-            provinces.forEach(province => {
-                const option = document.createElement('option');
-                option.value = province.id; // Use province ID as value
-                option.textContent = province.name; // Display province name
-                provinceSelect.appendChild(option);
-            });
+  setLoading(loading) {
+    this.isLoading = loading
+    const submitBtn = this.querySelector("#submit-btn")
+    const btnContent = this.querySelector("#btn-content")
+
+    if (loading) {
+      submitBtn.disabled = true
+      btnContent.textContent = "Creating Account..."
+    } else {
+      submitBtn.disabled = false
+      btnContent.textContent = "Create Account"
+    }
+  }
+
+  async fetchProvinces() {
+    const provinceSelect = this.querySelector("#province")
+    provinceSelect.innerHTML = '<option value="">Select Province</option>'
+
+    try {
+      const response = await fetch("https://kanglerian.my.id/api-wilayah-indonesia/api/provinces.json")
+      const provinces = await response.json()
+      this.populateProvincesDropdown(provinces)
+    } catch (error) {
+      console.error("Error fetching provinces:", error)
+      this.showToast("Error", "Failed to load provinces. Please try again later.", "error")
+    }
+  }
+
+  populateProvincesDropdown(provinces) {
+    const provinceSelect = this.querySelector("#province")
+    if (provinceSelect) {
+      provinces.forEach((province) => {
+        const option = document.createElement("option")
+        option.value = province.id
+        option.textContent = province.name
+        provinceSelect.appendChild(option)
+      })
+    }
+  }
+
+  setupProvinceChangeListener() {
+    const provinceSelect = this.querySelector("#province")
+    if (provinceSelect) {
+      provinceSelect.addEventListener("change", this.handleProvinceChange)
+    }
+  }
+
+  handleProvinceChange(event) {
+    const provinceId = event.target.value
+    const citySelect = this.querySelector("#city")
+
+    citySelect.innerHTML = '<option value="">Select City</option>'
+    citySelect.disabled = true
+
+    if (provinceId) {
+      this.fetchCitiesByProvinceId(provinceId)
+    }
+  }
+
+  async fetchCitiesByProvinceId(provinceId) {
+    const citySelect = this.querySelector("#city")
+    citySelect.disabled = true
+
+    try {
+      const response = await fetch(`https://kanglerian.my.id/api-wilayah-indonesia/api/regencies/${provinceId}.json`)
+      const cities = await response.json()
+      this.populateCitiesDropdown(cities)
+      citySelect.disabled = false
+    } catch (error) {
+      console.error(`Error fetching cities for province ${provinceId}:`, error)
+      this.showToast("Error", "Failed to load cities. Please try again later.", "error")
+      citySelect.disabled = true
+    }
+  }
+
+  populateCitiesDropdown(cities) {
+    const citySelect = this.querySelector("#city")
+    if (citySelect) {
+      cities.forEach((city) => {
+        const option = document.createElement("option")
+        option.value = city.id
+        option.textContent = city.name
+        citySelect.appendChild(option)
+      })
+    }
+  }
+
+  setupFormSubmission() {
+    const form = this.querySelector("#register-form")
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault()
+
+      // Check if user is already logged in
+      const token = localStorage.getItem("token")
+      if (token) {
+        window.location.href = "/#/home"
+        return
+      }
+
+      if (this.isLoading) return
+
+      const formData = new FormData(form)
+      const data = Object.fromEntries(formData.entries())
+
+      // Validate password match
+      if (data.password !== data["retype-password"]) {
+        this.showToast("Password Mismatch", "Passwords do not match. Please try again.", "error")
+        return
+      }
+
+      delete data["retype-password"]
+
+      // Get province and city names
+      const provinceSelect = this.querySelector("#province")
+      const citySelect = this.querySelector("#city")
+
+      const selectedProvinceOption = provinceSelect.options[provinceSelect.selectedIndex]
+      const selectedCityOption = citySelect.options[citySelect.selectedIndex]
+
+      const provinceName = selectedProvinceOption ? selectedProvinceOption.textContent : ""
+      const cityName = selectedCityOption ? selectedCityOption.textContent : ""
+
+      data.province_name = provinceName
+      data.city_name = cityName
+
+      console.log("Sending data to API:", data)
+
+      this.setLoading(true)
+
+      try {
+        const response = await fetch("http://localhost:5000/api/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+
+        const result = await response.json()
+
+        if (response.ok) {
+          if (result.status === "success") {
+            console.log("Registration successful:", result)
+            localStorage.setItem("token", result.token)
+            localStorage.setItem("user", JSON.stringify(result.data.user))
+
+            // Dispatch a custom event to notify other components
+            const loginEvent = new CustomEvent("userLoggedIn", {
+              detail: { user: result.data.user },
+            })
+            window.dispatchEvent(loginEvent)
+
+            this.showToast("Registration Successful!", "Welcome! Redirecting to login...", "success")
+
+            // Redirect after showing toast
+            setTimeout(() => {
+              window.location.href = "/#/login"
+            }, 1500)
+          } else {
+            console.error("Registration failed (API error):", result.message, result.errors)
+            const errorMessage =
+              result.message + (result.errors ? "\n" + result.errors.map((e) => e.msg).join(", ") : "")
+            this.showToast("Registration Failed", errorMessage, "error")
+          }
+        } else {
+          console.error("Registration failed (HTTP error):", response.status, result.message, result.errors)
+          const errorMessage =
+            result.message +
+            (result.errors ? "\n" + result.errors.map((e) => e.msg).join(", ") : "An unexpected error occurred.")
+          this.showToast("Registration Failed", errorMessage, "error")
         }
-    }
-
-    // Setup event listener for province select change
-    setupProvinceChangeListener() {
-        const provinceSelect = this.querySelector('#province');
-        if (provinceSelect) {
-            provinceSelect.addEventListener('change', this.handleProvinceChange);
-        }
-    }
-
-    // Handler for province select change
-    handleProvinceChange(event) {
-        const provinceId = event.target.value;
-        const citySelect = this.querySelector('#city');
-
-        // Reset city dropdown
-        citySelect.innerHTML = '<option value="">Select City</option>';
-        citySelect.disabled = true;
-
-        if (provinceId) {
-            this.fetchCitiesByProvinceId(provinceId);
-        }
-    }
-
-    // Method to fetch cities by province ID from external API
-    async fetchCitiesByProvinceId(provinceId) {
-        const citySelect = this.querySelector('#city');
-        // Disable city select while fetching
-        citySelect.disabled = true;
-
-        try {
-            const response = await fetch(`https://kanglerian.my.id/api-wilayah-indonesia/api/regencies/${provinceId}.json`);
-            const cities = await response.json();
-            this.populateCitiesDropdown(cities);
-            citySelect.disabled = false; // Enable city select after fetching
-        } catch (error) {
-            console.error(`Error fetching cities for province ${provinceId}:`, error);
-            alert('Failed to load cities. Please try again later.');
-            citySelect.disabled = true; // Keep disabled on error
-        }
-    }
-
-    // Method to populate the city dropdown
-    populateCitiesDropdown(cities) {
-        const citySelect = this.querySelector('#city');
-        if (citySelect) {
-            cities.forEach(city => {
-                const option = document.createElement('option');
-                option.value = city.id; // Use city ID as value
-                option.textContent = city.name; // Display city name
-                citySelect.appendChild(option);
-            });
-        }
-    }
-
-    setupFormSubmission() {
-        const form = this.querySelector('#register-form');
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const formData = new FormData(form);
-            // Convert FormData to a plain object
-            const data = Object.fromEntries(formData.entries());
-
-            if (data.password !== data['retype-password']) {
-                alert('Passwords do not match!');
-                return;
-            }
-
-            delete data['retype-password'];
-
-            // --- IMPORTANT: Get the text content (name) from selected options ---
-            const provinceSelect = this.querySelector('#province');
-            const citySelect = this.querySelector('#city');
-
-            // Ensure that the value sent to your backend API is the NAME, not the ID from the external API
-            // The 'name' attributes on the select elements are already 'province_name' and 'city_name'
-            // When accessing formData.entries(), for a select element, the value will be the VALUE of the selected option.
-            // We need the textContent of the selected option.
-
-            // Get selected province and city names from the dropdowns
-            const selectedProvinceOption = provinceSelect.options[provinceSelect.selectedIndex];
-            const selectedCityOption = citySelect.options[citySelect.selectedIndex];
-
-            const provinceName = selectedProvinceOption ? selectedProvinceOption.textContent : '';
-            const cityName = selectedCityOption ? selectedCityOption.textContent : '';
-
-            // Use these names in the data object sent to your backend
-            // Note: If the backend API *really* needs the ID from the external API,
-            // you would use option.value instead of option.textContent here.
-            // But based on your API docs showing "province_name": "Jawa Barat", it expects names.
-            data.province_name = provinceName;
-            data.city_name = cityName;
-            // --- End of IMPORTANT section ---
-
-
-            console.log('Sending data to API:', data);
-
-            try {
-                const response = await fetch('http://localhost:5000/api/auth/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    if (result.status === 'success') {
-                        console.log('Registration successful:', result);
-                        localStorage.setItem('token', result.token);
-                        localStorage.setItem('user', JSON.stringify(result.data.user));
-
-                        // Dispatch a custom event to notify other components like navbar
-                        const loginEvent = new CustomEvent('userLoggedIn', {
-                            detail: { user: result.data.user }
-                        });
-                        window.dispatchEvent(loginEvent);
-
-                        alert('Registration successful!');
-                        window.location.href = '/#/login'; // Often redirect to login after register
-                    } else {
-                        console.error('Registration failed (API error):', result.message, result.errors);
-                        alert('Registration failed: ' + result.message + (result.errors ? '\n' + result.errors.map(e => e.msg).join('\n') : ''));
-                    }
-                } else {
-                    console.error('Registration failed (HTTP error):', response.status, result.message, result.errors);
-                    alert('Registration failed: ' + result.message + (result.errors ? '\n' + result.errors.map(e => e.msg).join('\n') : 'An unexpected error occurred.'));
-                }
-
-            } catch (error) {
-                console.error('Error during registration API call:', error);
-                alert('An error occurred during registration. Please try again.');
-            }
-        });
-    }
+      } catch (error) {
+        console.error("Error during registration API call:", error)
+        this.showToast("Connection Error", "Unable to connect to server. Please try again.", "error")
+      } finally {
+        this.setLoading(false)
+      }
+    })
+  }
 }
 
-customElements.define('register-page', RegisterPage);
+customElements.define("register-page", RegisterPage)

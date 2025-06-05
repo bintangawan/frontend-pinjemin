@@ -1,27 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="src/public/icon.png" sizes="512x512" >
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="manifest" href="app.webmanifest" />
+    <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png" />
+    <title>Pinjemin - Making All Your Needs Easier</title>
+  </head>
+  <body class="bg-white-100 font-sans antialiased">
+    <!-- App Bar Container - akan diisi dinamis oleh router -->
+    <div id="app-bar-container">
+      <app-bar></app-bar>
+    </div>
 
-    <title>Pinjemin App</title>
-</head>
-<body class="bg-gray-100 font-sans antialiased flex flex-col min-h-screen">
-
-    <app-bar></app-bar>
-
-    <main class="container mx-auto mt-0 px-4 py-8 flex-grow">
+    <!-- Main Content Container - akan diisi oleh router -->
+    <main id="main-content" class="flex-grow">
+      <!-- Default content saat pertama load -->
+      <div class="container mx-auto mt-0 px-4 py-8">
         <all-product></all-product>
+      </div>
     </main>
 
+    <!-- Default Footer - akan disembunyikan untuk landing page -->
     <footer class="bg-gray-200 mt-12 py-6">
-        <div class="container mx-auto px-4 text-center text-gray-600">
-            &copy; 2025 Pinjemin App. All rights reserved.
-        </div>
+      <div class="container mx-auto px-4 text-center text-gray-600">
+        &copy; 2025 Pinjemin App. All rights reserved.
+      </div>
     </footer>
-
-    <script src="dist/bundle.js"></script>
-
-</body>
+  </body>
 </html>

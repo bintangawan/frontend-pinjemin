@@ -5,7 +5,7 @@ const productData = [
         name: 'Canon EOS 80D',
         description: 'DSLR camera for enthusiasts',
         price: 12000000,
-        imageUrl: './eos-80d.jpg',
+        imageUrl: './pinjemin.png',
         type: 'buy', // 'buy' or 'rent'
     },
     {
