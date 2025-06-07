@@ -216,7 +216,7 @@ class DetailTransactionPage extends HTMLElement {
       return
     }
 
-    this._socket = io("http://localhost:5000", {
+    this._socket = io("http://31.97.67.212:5000", {
       query: { transactionId: transactionId },
       auth: { token: token },
     })
@@ -672,7 +672,7 @@ class DetailTransactionPage extends HTMLElement {
                          ${
                            transaction.item_photo
                              ? `
-                             <img src="http://localhost:5000${transaction.item_photo}" alt="Item Photo" class="w-32 h-32 object-cover rounded mt-2">
+                             <img src="http://31.97.67.212:5000${transaction.item_photo}" alt="Item Photo" class="w-32 h-32 object-cover rounded mt-2">
                          `
                              : ""
                          }

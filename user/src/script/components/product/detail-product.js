@@ -168,7 +168,7 @@ class DetailProduct extends HTMLElement {
           // Check if user has completed transaction with this item
           // Ganti bagian check transaction dengan fetch langsung
           try {
-            const response = await fetch(`http://localhost:5000/api/transactions/user/${currentUser.id}/item/${itemId}/completed`, {
+            const response = await fetch(`http://31.97.67.212:5000/api/transactions/user/${currentUser.id}/item/${itemId}/completed`, {
               headers: { 'Authorization': `Bearer ${Utils.getToken()}` }
             })
             this._hasCompletedTransaction = response.ok && response.status === 200
@@ -670,7 +670,7 @@ class DetailProduct extends HTMLElement {
                         <!-- Main Photo Display -->
                         <div class="mb-8">
                             <div class="relative bg-gray-50 rounded-2xl overflow-hidden product-main-image" style="height: 450px;">
-                                <img src="http://localhost:5000${item.photos[this._currentPhotoIndex]}" 
+                                <img src="http://31.97.67.212:5000${item.photos[this._currentPhotoIndex]}" 
                                      alt="${item.name}" 
                                      class="w-full h-full object-contain">
                                 ${
@@ -704,7 +704,7 @@ class DetailProduct extends HTMLElement {
                                                 (photo, index) => `
                                                 <div class="flex-shrink-0 cursor-pointer thumbnail-item ${index === this._currentPhotoIndex ? "active" : ""}" 
                                                      data-index="${index}">
-                                                    <img src="http://localhost:5000${photo}" 
+                                                    <img src="http://31.97.67.212:5000${photo}" 
                                                          alt="${item.name} ${index + 1}" 
                                                          class="w-24 h-24 object-cover">
                                                 </div>
@@ -1056,7 +1056,7 @@ class DetailProduct extends HTMLElement {
         <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-6">
           <div class="flex flex-wrap gap-4 items-center">
             <div class="flex-shrink-0">
-              <img src="${item.thumbnail ? `http://localhost:5000${item.thumbnail}` : "https://via.placeholder.com/80"}" 
+              <img src="${item.thumbnail ? `http://31.97.67.212:5000${item.thumbnail}` : "https://via.placeholder.com/80"}" 
                    alt="${item.name}" class="w-20 h-20 object-cover rounded-lg">
             </div>
             <div class="flex-grow">
@@ -1149,7 +1149,7 @@ class DetailProduct extends HTMLElement {
       `
     }
 
-    const backendBaseUrl = "http://localhost:5000"
+    const backendBaseUrl = "http://31.97.67.212:5000"
     const formatRupiah = this.formatRupiah
 
     // Ensure we have exactly 8 recommendations or as many as possible
@@ -1390,7 +1390,7 @@ class DetailProduct extends HTMLElement {
     const thumbnails = this.querySelectorAll(".thumbnail-item")
 
     if (mainImg && this._item && this._item.photos) {
-      mainImg.src = `http://localhost:5000${this._item.photos[this._currentPhotoIndex]}`
+      mainImg.src = `http://31.97.67.212:5000${this._item.photos[this._currentPhotoIndex]}`
     }
 
     thumbnails.forEach((thumb, index) => {

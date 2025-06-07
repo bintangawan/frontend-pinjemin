@@ -98,7 +98,7 @@ class CommunityPage extends HTMLElement {
 
   _connectSocket() {
     const token = localStorage.getItem('token');
-    this._socket = io('http://localhost:5000', {
+    this._socket = io('http://31.97.67.212:5000', {
       auth: { token }
     });
 

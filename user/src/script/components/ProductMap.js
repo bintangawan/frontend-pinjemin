@@ -318,7 +318,7 @@ export class ProductMap {
       }
 
       // Buat konten popup
-      const backendBaseUrl = "http://localhost:5000"
+      const backendBaseUrl = "http://31.97.67.212:5000"
       const popupContent = `
         <div style="min-width: 220px; font-family: 'Poppins', sans-serif;">
           <div style="margin-bottom: 10px;">

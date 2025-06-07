@@ -411,7 +411,7 @@ class AllProduct extends HTMLElement {
     if (this.userRecommendationsError) return `<div>Error: ${this.userRecommendationsError}</div>`;
     if (!this.userRecommendations || this.userRecommendations.length === 0) return `<div>No recommendations available.</div>`;
 
-    const backendBaseUrl = "http://localhost:5000";
+    const backendBaseUrl = "http://31.97.67.212:5000";
     const formatRupiah = (money) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(money);
     
     return `
@@ -433,7 +433,7 @@ class AllProduct extends HTMLElement {
     if (this.searchRecommendationsError) return `<div>Error: ${this.searchRecommendationsError}</div>`;
     if (!this.searchRecommendations || this.searchRecommendations.length === 0) return `<div>No suggestions found.</div>`;
 
-    const backendBaseUrl = "http://localhost:5000";
+    const backendBaseUrl = "http://31.97.67.212:5000";
     const formatRupiah = (money) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(money);
 
     return `
@@ -488,7 +488,7 @@ class AllProduct extends HTMLElement {
   }
 
   generateItemList(items) {
-    const backendBaseUrl = "http://localhost:5000";
+    const backendBaseUrl = "http://31.97.67.212:5000";
     const formatRupiah = (money) => money != null ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(money) : "-";
     return items.map(item => {
       const statusInfo = this.getStatusInfo(item);

@@ -39,7 +39,7 @@ registerRoute(({ url }) => url.pathname.startsWith("/api/"), new NetworkOnly())
 registerRoute(({ request }) => request.mode === "navigate", new NetworkOnly())
 
 // Constants for notification handling
-const BASE_URL = "http://localhost:5000/api"
+const BASE_URL = "http://31.97.67.212:5000/api"
 const NOTIFICATION_CACHE = "notifications-cache"
 const APP_NAME = "Pinjemin"
 const DEFAULT_ICON = "./logo-pinjemin.png"

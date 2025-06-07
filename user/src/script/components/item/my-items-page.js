@@ -680,7 +680,7 @@ class MyItemsPage extends HTMLElement {
           <div class="flex items-start gap-4 flex-1">
             ${
               item.thumbnail
-                ? `<img src="http://localhost:5000${item.thumbnail}" alt="Thumbnail ${item.name}" class="w-20 h-20 object-cover rounded-lg border-2 border-gray-200 flex-shrink-0">`
+                ? `<img src="http://31.97.67.212:5000${item.thumbnail}" alt="Thumbnail ${item.name}" class="w-20 h-20 object-cover rounded-lg border-2 border-gray-200 flex-shrink-0">`
                 : `<div class="w-20 h-20 bg-gray-200 rounded-lg border-2 border-gray-300 flex items-center justify-center flex-shrink-0">
                     <span class="text-gray-500 text-xs">No Image</span>
                   </div>`
