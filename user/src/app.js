@@ -49,7 +49,6 @@ const router = () => {
 
 // ✅ PERBAIKAN: Strict Notification System - WAJIB PUNYA SUBSCRIPTION
 const initializeNotificationSystem = async () => {
-  console.log("Initializing notification system...")
 
   // Add notification permission popup to the DOM
   const existingPopup = document.querySelector("notification-permission-popup")
@@ -65,18 +64,15 @@ const initializeNotificationSystem = async () => {
 
   const token = localStorage.getItem("token")
   if (!token) {
-    console.log("No token found, skipping notification initialization")
     return
   }
 
   // ✅ STRICT: Cek apakah perlu setup notifications
   try {
     const setupStatus = await globalNotificationHelper.needsNotificationSetup()
-    console.log("Notification setup status:", setupStatus)
 
     // ✅ Jika sudah ada subscription yang valid, ALLOW
     if (!setupStatus.needsSetup && setupStatus.canProceed) {
-      console.log("Notifications already set up properly - user can proceed")
       localStorage.setItem("notification_permission_completed", "true")
       return
     }
@@ -104,11 +100,9 @@ const initializeNotificationSystem = async () => {
 
     // ✅ Jika bisa proceed dan permission granted, coba auto-initialize
     if (setupStatus.canProceed && Notification.permission === "granted") {
-      console.log("Permission granted but subscription missing, auto-initializing...")
 
       const success = await globalNotificationHelper.initializePushNotifications()
       if (success) {
-        console.log("Auto-initialization successful")
         localStorage.setItem("notification_permission_completed", "true")
         window.dispatchEvent(new CustomEvent("notificationsActivated"))
       } else {
@@ -144,7 +138,6 @@ const recheckNotificationSubscription = async () => {
   }
 
   try {
-    console.log("Rechecking notification subscription...")
 
     const setupStatus = await globalNotificationHelper.needsNotificationSetup()
 
@@ -168,11 +161,9 @@ const recheckNotificationSubscription = async () => {
 
     // ✅ Jika perlu setup tapi bisa proceed dan permission granted, coba auto-fix
     if (setupStatus.needsSetup && setupStatus.canProceed && Notification.permission === "granted") {
-      console.log("Attempting auto-reinitialization...")
 
       const success = await globalNotificationHelper.initializePushNotifications()
       if (success) {
-        console.log("Auto-reinitialization successful")
         localStorage.setItem("notification_permission_completed", "true")
         window.dispatchEvent(new CustomEvent("notificationsActivated"))
       } else {
@@ -208,7 +199,6 @@ const checkTokenValidity = () => {
     const currentTime = Math.floor(Date.now() / 1000)
 
     if (payload.exp && payload.exp < currentTime) {
-      console.log("Token expired, cleaning up...")
 
       // ✅ Clean up notification data on token expiry
       localStorage.removeItem("notification_permission_completed")
@@ -233,7 +223,6 @@ if ("serviceWorker" in navigator) {
       const registration = await navigator.serviceWorker.getRegistration()
 
       if (registration) {
-        console.log("Service Worker found, setting up event listeners")
 
         registration.addEventListener("updatefound", () => {
           const newWorker = registration.installing

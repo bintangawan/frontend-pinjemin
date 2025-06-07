@@ -4,7 +4,6 @@ class LandingPage extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log("Pinjemin Page Component Connected")
     this.render()
     this.setupMobileMenuToggle()
     this.setupScrollAnimations()
@@ -15,7 +14,6 @@ class LandingPage extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log("Pinjemin Page Component Disconnected")
 
     // Remove mobile menu listeners
     const mobileMenuButton = this.querySelector("#mobile-menu-button")
@@ -101,18 +99,15 @@ class LandingPage extends HTMLElement {
 
   // Mobile Menu Drawer Toggle
   setupMobileMenuToggle() {
-    console.log("Setting up mobile drawer toggle...")
     const mobileMenuButton = this.querySelector("#mobile-menu-button")
     const mobileDrawer = this.querySelector("#mobile-drawer")
     const drawerOverlay = this.querySelector("#drawer-overlay")
     const closeDrawerButton = this.querySelector("#close-drawer-button")
 
     if (mobileMenuButton && mobileDrawer && drawerOverlay) {
-      console.log("Mobile drawer elements found. Setting up listeners.")
 
       // Open drawer
       this._mobileMenuButtonHandler = (event) => {
-        console.log("Mobile menu button clicked.")
         this.openDrawer()
       }
       mobileMenuButton.addEventListener("click", this._mobileMenuButtonHandler)
@@ -136,7 +131,6 @@ class LandingPage extends HTMLElement {
       const drawerLinks = mobileDrawer.querySelectorAll("a")
       drawerLinks.forEach((link) => {
         link.addEventListener("click", () => {
-          console.log("Drawer link clicked, closing drawer.")
           this.closeDrawer()
         })
       })
@@ -171,8 +165,6 @@ class LandingPage extends HTMLElement {
 
       // Prevent body scroll when drawer is open
       document.body.style.overflow = "hidden"
-
-      console.log("Drawer opened")
     }
   }
 
@@ -191,8 +183,6 @@ class LandingPage extends HTMLElement {
 
       // Restore body scroll
       document.body.style.overflow = ""
-
-      console.log("Drawer closed")
     }
   }
 
@@ -258,13 +248,13 @@ class LandingPage extends HTMLElement {
                 <!-- Logo (Center on mobile, Left on desktop) -->
                 <div class="flex items-center justify-center md:justify-start flex-1 md:flex-none">
                     <div class="text-xl font-bold text-gray-800 flex items-center">
-                        <img src="./pinjemin.png" class="mr-2 h-16 inline-block" alt="Pinjemin Logo">
+                        <img src="./logo-pinjemin.png" class="mr-2 h-16 inline-block" alt="Pinjemin Logo">
                     </div>
                 </div>
 
                 <!-- Desktop Navigation (Hidden on mobile) -->
                 <nav class="hidden md:flex items-center space-x-8 flex-1 justify-center">
-                    <a href="/#/" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
+                    <a href="#beranda" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
                         Beranda
                     </a>
                     <a href="/#/community" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
@@ -298,7 +288,7 @@ class LandingPage extends HTMLElement {
             <!-- Drawer Header -->
             <div class="flex items-center justify-between p-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
-                    <img src="./pinjemin.png" class="h-8" alt="Pinjemin Logo">
+                    <img src="./logo-pinjemin.png" class="h-8" alt="Pinjemin Logo">
                     <span class="text-lg font-bold text-gray-800">Pinjemin</span>
                 </div>
                 <button id="close-drawer-button" class="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
@@ -355,15 +345,15 @@ class LandingPage extends HTMLElement {
         </div>
 
         <!-- Hero Section -->
-        <section class="gradient-bg hero-pattern min-h-screen flex items-center justify-center px-4 py-20">
+        <section id="beranda" class="gradient-bg hero-pattern min-h-screen flex items-center justify-center px-4 py-20">
             <div class="container mx-auto">
                 <div class="grid lg:grid-cols-2 gap-12 items-center">
                     <!-- Left Content -->
                     <div class="text-white space-y-8 animate-on-scroll">
                         <div class="space-y-4">
-                            <h1 class="text-4xl md:text-6xl font-bold leading-tight text-yellow-900">
+                            <h1 class="text-4xl md:text-6xl font-bold leading-tight text-[#2E64E9]">
                                 Pinjemin - 
-                                <span class="text-yellow-400">Making All Your Needs Easier</span>
+                                <span class="text-[#2E64E9]">Making All Your Needs Easier</span>
                             </h1>
                             <p class="text-xl md:text-2xl text-gray-700 leading-relaxed">
                                 Platform serbaguna yang memudahkan kamu membeli, menyewa, atau meminjam barang apapun.
@@ -371,10 +361,10 @@ class LandingPage extends HTMLElement {
                         </div>
                         
                         <div class="flex flex-col sm:flex-row gap-4">
-                            <a href="/#/register" class="bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-yellow-300 transition-all duration-300 text-center shadow-lg">
+                            <a href="/#/register" class="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all duration-300 text-center shadow-lg">
                                 Mulai Sekarang
                             </a>
-                            <button onclick="document.getElementById('how-it-works').scrollIntoView({behavior: 'smooth'})" class="bg-transparent border border-yellow-400 text-yellow-400 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-yellow-400 hover:text-gray-900 transition-all duration-300 text-center shadow-lg">
+                            <button onclick="document.getElementById('how-it-works').scrollIntoView({behavior: 'smooth'})" class="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-600 hover:text-white transition-all duration-300 text-center">
                                 Pelajari Lebih Lanjut
                             </button>
                         </div>
@@ -383,7 +373,7 @@ class LandingPage extends HTMLElement {
                     <!-- Right Content - Hero Image -->
                     <div class="flex justify-center animate-on-scroll">
                         <div class="relative">
-                            <img src="./dashboard-pagee.png?height=1080&width=1920" alt="Pinjemin Platform Illustration" class="w-full max-w-2xl rounded-2xl">
+                            <img src="./dashboard-page.png?height=1080&width=1920" alt="Pinjemin Platform Illustration" class="w-full max-w-2xl rounded-2xl">
                             <div class="absolute -top-4 -right-4 bg-yellow-400 text-blue-900 px-4 py-2 rounded-full font-bold text-sm shadow-lg">
                                 Sewa & Beli!
                             </div>
@@ -798,7 +788,7 @@ class LandingPage extends HTMLElement {
                     <!-- Logo & Description -->
                     <div class="md:col-span-2">
                         <div class="flex items-center mb-4">
-                            <img src="./pinjemin.png" class="h-12 mr-3" alt="Pinjemin Logo">
+                            <img src="./logo-pinjemin.png" class="h-12 mr-3" alt="Pinjemin Logo">
                             <span class="text-2xl font-bold">Pinjemin</span>
                         </div>
                         <p class="text-gray-400 mb-4 max-w-md">
@@ -827,7 +817,7 @@ class LandingPage extends HTMLElement {
                     <div>
                         <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
                         <ul class="space-y-2">
-                            <li><a href="/#/" class="text-gray-400 hover:text-white transition-colors duration-200">Beranda</a></li>
+                            <li><a href="#beranda" class="text-gray-400 hover:text-white transition-colors duration-200">Beranda</a></li>
                             <li><a href="/#/community" class="text-gray-400 hover:text-white transition-colors duration-200">Komunitas</a></li>
                             <li><a href="/#/login" class="text-gray-400 hover:text-white transition-colors duration-200">Masuk</a></li>
                             <li><a href="/#/register" class="text-gray-400 hover:text-white transition-colors duration-200">Daftar</a></li>

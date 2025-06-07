@@ -41,6 +41,19 @@ class Utils {
         const user = localStorage.getItem('user');
         return user ? JSON.parse(user) : null;
     }
+    // --- Fungsi slugify BARU ---
+  static slugify(text) {
+    if (!text) return "";
+    return text
+      .toString()
+      .normalize("NFD") // Pisahkan diakritik dari huruf
+      .replace(/[\u0300-\u036f]/g, "") // Hapus diakritik
+      .toLowerCase() // Ubah ke huruf kecil
+      .trim() // Hapus spasi di awal/akhir
+      .replace(/\s+/g, "-") // Ganti spasi dengan tanda hubung
+      .replace(/[^\w-]+/g, "") // Hapus semua karakter non-kata (kecuali tanda hubung)
+      .replace(/--+/g, "-"); // Ganti tanda hubung ganda dengan satu tanda hubung
+  }
 }
 
 export default Utils;

@@ -10,8 +10,11 @@ import './transaction/my-transactions-page';
 import './transaction/detail-transaction-page';
 import './transaction/my-seller-transactions-page';
 import './community/community-page';
+import './hobby/hobby-page';
 import "./notification-permission-popup.js"
 import "./notification-badge.js"
 import "./notifications-page.js"
 import "./notification-list.js"
 import "./landing/landing-page"
+import "./ProductMap.js"
+import "./SmallMap.js"

@@ -51,7 +51,6 @@ class NotificationBadge extends HTMLElement {
   }
 
   handleUserLoggedIn() {
-    console.log("NotificationBadge: User logged in, fetching unread count...")
     // Reset count and fetch new data for the logged in user
     this.count = 0
     this.updateBadge()
@@ -74,7 +73,6 @@ class NotificationBadge extends HTMLElement {
   }
 
   handleUserLoggedOut() {
-    console.log("NotificationBadge: User logged out, clearing count...")
     // Clear count and stop interval
     this.count = 0
     this.updateBadge()

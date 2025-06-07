@@ -1,425 +1,364 @@
-import { apiGet, apiPatch, apiDelete, clearAuthData } from '../../utils/apiService.js'; // Import fungsi dari apiService
-// Tidak perlu import wilayahService lagi
-// import { fetchProvinces, fetchCitiesByProvinceId } from '../../utils/wilayahService.js';
+import { apiGet, apiPatch, apiDelete, clearAuthData } from '../../utils/apiService.js';
 
 class ProfilePage extends HTMLElement {
     constructor() {
         super();
-        // Bind methods jika diperlukan, terutama untuk event handlers
+        // Bind methods
         this.fetchUserProfile = this.fetchUserProfile.bind(this);
-        this.handleUpdateProfile = this.handleUpdateProfile.bind(this); // Contoh handler submit form
-        // Jika ada form update password
-        // this.handleUpdatePassword = this.handleUpdatePassword.bind(this);
-        this.handleProvinceChangeForUpdateForm = this.handleProvinceChangeForUpdateForm.bind(this); // Bind handler perubahan provinsi
+        this.handleUpdateProfile = this.handleUpdateProfile.bind(this);
+        this.handleUpdatePassword = this.handleUpdatePassword.bind(this);
 
-        // Bind metode wilayah yang disalin
-        this.fetchProvinces = this.fetchProvinces.bind(this);
-        this.populateProvincesDropdown = this.populateProvincesDropdown.bind(this);
-        this.fetchCitiesByProvinceId = this.fetchCitiesByProvinceId.bind(this);
-        this.populateCitiesDropdown = this.populateCitiesDropdown.bind(this);
-        this.setupProvinceChangeListener = this.setupProvinceChangeListener.bind(this); // Bind setup listener
-        this.setWilayahDropdowns = this.setWilayahDropdowns.bind(this); // Bind method untuk set nilai dropdown awal
-
-
-        // State internal komponen jika ada
+        // State internal komponen
         this.user = null;
-        // Tidak perlu menyimpan daftar provinsi/kota di state jika langsung mengisi dropdown
-        // this.provinces = []; // Untuk menyimpan daftar provinsi
-        // this.cities = [];     // Untuk menyimpan daftar kota
     }
 
     connectedCallback() {
-        // Render struktur HTML awal
         this.render();
-        // Setup event listeners untuk form atau tombol update SEBELUM fetch data agar elemennya ada
-        this.setupEventListeners(); // Pindah ke sini
-        // Ambil data profil saat komponen terhubung ke DOM
+        this.setupEventListeners();
         this.fetchUserProfile();
-        // Fetch data wilayah (provinsi) saat komponen terhubung
-        this.fetchProvinces(); // Panggil metode fetch provinces yang disalin
-        this.setupProvinceChangeListener(); // Panggil setup listener yang disalin
     }
 
     disconnectedCallback() {
-        // Hapus event listeners jika diperlukan untuk cleanup
         this.removeEventListeners();
-        // Hapus event listener untuk province change di form update
-        const updateProvinceSelect = this.querySelector('#update-province');
-        if (updateProvinceSelect) {
-            updateProvinceSelect.removeEventListener('change', this.handleProvinceChangeForUpdateForm);
-        }
     }
 
     render() {
-        // Definisikan struktur HTML untuk halaman profil di sini
-        // HTML ini akan menampilkan info pengguna, form update profil, form update password, dll.
         this.innerHTML = `
             <div class="container mx-auto px-4 py-8 font-opensan">
-                <h2 class="text-2xl font-montserrat font-bold mb-6 text-gray-800">Profil Pengguna</h2>
+                <h2 class="text-3xl font-montserrat font-bold mb-8 text-gray-800">Profil Pengguna</h2>
 
                 <!-- Main Card Container -->
-                <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
-                    <!-- Informasi Akun Container (Dark) -->
-                    <div class="bg-gray-700 text-white p-4 rounded-md shadow-sm mb-6">
-                        <h3 class="text-xl font-montserrat font-semibold mb-3">Informasi Akun</h3>
-                        <div id="profile-info">
-                            <p class="mb-2"><strong>Nama:</strong> <span id="user-name">Loading...</span></p>
-                            <p class="mb-2"><strong>Email:</strong> <span id="user-email">Loading...</span></p>
-                            <p class="mb-2"><strong>Provinsi:</strong> <span id="user-province">Loading...</span></p>
-                            <p class="mb-2"><strong>Kota:</strong> <span id="user-city">Loading...</span></p>
+                <div class="bg-white p-8 rounded-2xl shadow-xl mb-8 border border-gray-100">
+                    <!-- Informasi Akun Container (Gradient) -->
+                    <div class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white p-6 rounded-xl shadow-lg mb-8">
+                        <h3 class="text-2xl font-montserrat font-bold mb-4 flex items-center">
+                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            Informasi Akun
+                        </h3>
+                        <div id="profile-info" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                                <p class="text-sm opacity-80 mb-1">Nama</p>
+                                <p class="font-semibold text-lg" id="user-name">Loading...</p>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                                <p class="text-sm opacity-80 mb-1">Email</p>
+                                <p class="font-semibold text-lg" id="user-email">Loading...</p>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                                <p class="text-sm opacity-80 mb-1">Provinsi</p>
+                                <p class="font-semibold text-lg" id="user-province">Loading...</p>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                                <p class="text-sm opacity-80 mb-1">Kota</p>
+                                <p class="font-semibold text-lg" id="user-city">Loading...</p>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 md:col-span-2">
+                                <p class="text-sm opacity-80 mb-1">Hobby</p>
+                                <p class="font-semibold text-lg" id="user-hobby">Loading...</p>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Perbarui Profil Section (Inside White Card) -->
+                    <!-- Perbarui Profil Section -->
                     <div>
-                        <h3 class="text-xl font-montserrat font-semibold mb-4 text-gray-700">Perbarui Profil</h3>
-                        <form id="update-profile-form" class="space-y-4">
+                        <h3 class="text-2xl font-montserrat font-bold mb-6 text-gray-800 flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Perbarui Profil
+                        </h3>
+                        <form id="update-profile-form" class="space-y-6">
                             <div>
-                                <label for="update-name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
-                                <input type="text" id="update-name" name="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="Nama Lengkap" />
+                                <label for="update-name" class="block mb-2 text-sm font-semibold text-gray-700">Nama Lengkap</label>
+                                <input type="text" id="update-name" name="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full p-3 transition-all duration-200" placeholder="Masukkan nama lengkap" />
                             </div>
+
+                            <div>
+                          <label for="update-hobby" class="block text-sm font-medium text-gray-700 mb-1">Hobby</label>
+                          <select 
+                              id="update-hobby" 
+                              name="hobby" 
+                              required 
+                              class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          >
+                              <option value="">Select Hobby</option>
+                              <option value="MASAK">Masak</option>
+                              <option value="MEMBACA">Membaca</option>
+                              <option value="FOTOGRAFI">Fotografi</option>
+                          </select>
+                        </div>
                             
-                             <div>
-                                <label for="update-province" class="block mb-2 text-sm font-medium text-gray-900">Provinsi</label>
-                                <select id="update-province" name="province_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                                     <option value="">Pilih Provinsi</option>
-                                 </select>
+                            <!-- Tooltip Container -->
+                            <div class="tooltip-container relative">
+                                <div>
+                                    <label for="update-province" class="block mb-2 text-sm font-semibold text-gray-700">Provinsi</label>
+                                    <div class="relative">
+                                        <input type="text" id="update-province" name="province_name" readonly class="bg-gray-100 border border-gray-300 text-gray-500 text-sm rounded-xl block w-full p-3 cursor-not-allowed opacity-60" placeholder="Provinsi tidak dapat diubah" />
+                                        <div class="absolute inset-0 cursor-help" title="Anda tidak dapat mengedit provinsi sesuai dengan kebijakan kami demi keamanan"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <label for="update-city" class="block mb-2 text-sm font-semibold text-gray-700">Kota/Kabupaten</label>
+                                    <div class="relative">
+                                        <input type="text" id="update-city" name="city_name" readonly class="bg-gray-100 border border-gray-300 text-gray-500 text-sm rounded-xl block w-full p-3 cursor-not-allowed opacity-60" placeholder="Kota tidak dapat diubah" />
+                                        <div class="absolute inset-0 cursor-help" title="Anda tidak dapat mengedit kota sesuai dengan kebijakan kami demi keamanan"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tooltip -->
+                                <div class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 invisible transition-all duration-200 whitespace-nowrap z-10">
+                                    Anda tidak dapat mengedit provinsi atau kota sesuai dengan kebijakan kami demi keamanan
+                                    <div class="tooltip-arrow absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                </div>
                             </div>
-                             <div>
-                                <label for="update-city" class="block mb-2 text-sm font-medium text-gray-900">Kota/Kabupaten</label>
-                                <select id="update-city" name="city_id" disabled class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <option value="">Pilih Kota</option>
-                                 </select>
-                            </div>
-                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-semibold rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                               Perbarui
+
+                            <button type="submit" class="w-full flex justify-center py-3 px-6 border border-transparent shadow-lg text-sm font-bold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                </svg>
+                                Perbarui Profil
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <!-- Second Card Container -->
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                     <!-- Ubah Kata Sandi Section (Inside White Card)-->
-                     <div>
-                         <h3 class="text-xl font-montserrat font-semibold mb-4 text-gray-700">Ubah Kata Sandi</h3>
-                         <form id="update-password-form" class="space-y-4">
-                             <div>
-                                 <label for="current-password" class="block mb-2 text-sm font-medium text-gray-900">Kata Sandi Saat Ini</label>
-                                 <input type="password" id="current-password" name="currentPassword" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                             </div>
-                              <div>
-                                 <label for="new-password" class="block mb-2 text-sm font-medium text-gray-900">Kata Sandi Baru</label>
-                                 <input type="password" id="new-password" name="newPassword" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                             </div>
-                             <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-semibold rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <!-- Password Card Container -->
+                <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+                    <div>
+                        <h3 class="text-2xl font-montserrat font-bold mb-6 text-gray-800 flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                            Ubah Kata Sandi
+                        </h3>
+                        <form id="update-password-form" class="space-y-6">
+                            <div>
+                                <label for="current-password" class="block mb-2 text-sm font-semibold text-gray-700">Kata Sandi Saat Ini</label>
+                                <input type="password" id="current-password" name="currentPassword" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 block w-full p-3 transition-all duration-200" placeholder="Masukkan kata sandi saat ini">
+                            </div>
+                            <div>
+                                <label for="new-password" class="block mb-2 text-sm font-semibold text-gray-700">Kata Sandi Baru</label>
+                                <input type="password" id="new-password" name="newPassword" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 block w-full p-3 transition-all duration-200" placeholder="Masukkan kata sandi baru">
+                            </div>
+                            <button type="submit" class="w-full flex justify-center py-3 px-6 border border-transparent shadow-lg text-sm font-bold rounded-xl text-white bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 transform hover:scale-105">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
                                 Ubah Kata Sandi
-                             </button>
-                         </form>
-                     </div>
-                 </div>
+                            </button>
+                        </form>
+                    </div>
+                </div>
 
+                <!-- Success Modal -->
+                <div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                    <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Password Berhasil Diubah!</h3>
+                        <p class="text-gray-600 mb-6">Password Anda telah berhasil diganti. Silakan login ulang untuk keamanan.</p>
+                        <button id="login-redirect-btn" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200">
+                            Login Ulang
+                        </button>
+                    </div>
+                </div>
             </div>
+
+            <style>
+                .tooltip-container:hover .tooltip {
+                    opacity: 1;
+                    visibility: visible;
+                }
+                
+                .tooltip-arrow {
+                    filter: drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.1));
+                }
+                
+                /* Custom scrollbar */
+                ::-webkit-scrollbar {
+                    width: 8px;
+                }
+                
+                ::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                    border-radius: 4px;
+                }
+                
+                ::-webkit-scrollbar-thumb {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 4px;
+                }
+                
+                ::-webkit-scrollbar-thumb:hover {
+                    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+                }
+
+                /* Modal animation */
+                #success-modal.show {
+                    animation: fadeIn 0.3s ease-out;
+                }
+
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+            </style>
         `;
     }
 
-    // ================================================================
-    // Metode-metode yang menggunakan apiService
-    // Kode fetchUserProfile dan updateUserProfile dari contoh Anda dipindahkan ke sini
-    // ================================================================
-
     async fetchUserProfile() {
         try {
-            // Gunakan apiGet dari apiService
             const result = await apiGet('/auth/me');
             if (result.status === 'success') {
-                this.user = result.data.user; // Simpan data user di state komponen
-                console.log('User Profile:', this.user);
-                this.updateUIWithUserProfile(); // Panggil metode untuk menampilkan data
-                // Setelah data user didapat dan UI awal diupdate, set nilai dropdown wilayah
-                this.setWilayahDropdowns(); // Panggil metode untuk set nilai dropdown awal
+                this.user = result.data.user;
+                this.updateUIWithUserProfile();
             } else {
                 console.error('Failed to fetch user profile:', result.message);
-                // Tampilkan pesan error di UI
             }
         } catch (error) {
             console.error('Error fetching user profile:', error);
-            // apiService sudah menangani 401/403 (redirect ke login)
-            // Tangani error lain jika perlu, misalnya tampilkan pesan error generik
         }
     }
 
     async handleUpdateProfile(event) {
-        event.preventDefault(); // Cegah refresh halaman
+        event.preventDefault();
 
         const form = event.target;
         const formData = new FormData(form);
         const profileData = Object.fromEntries(formData.entries());
 
-        // Dapatkan ID dan Nama provinsi serta kota dari dropdown yang dipilih
-        const provinceSelect = this.querySelector('#update-province');
-        const citySelect = this.querySelector('#update-city');
-        const selectedProvinceOption = provinceSelect.options[provinceSelect.selectedIndex];
-        const selectedCityOption = citySelect.options[citySelect.selectedIndex];
-
-        // Ambil value (ID) dan text (Name) dari opsi terpilih
-        // Sesuaikan dengan kebutuhan backend Anda - jika backend butuh ID dari API wilayah, gunakan value.
-        // Jika backend butuh nama, gunakan textContent.
-        // Berdasarkan diskusi sebelumnya, backend Anda menerima province_id dan city_id.
-        profileData.province_id = selectedProvinceOption ? selectedProvinceOption.value : null;
-        profileData.province_name = selectedProvinceOption ? selectedProvinceOption.textContent : ''; // Tetap kirim nama juga jika backend butuh
-        profileData.city_id = selectedCityOption ? selectedCityOption.value : null;
-        profileData.city_name = selectedCityOption ? selectedCityOption.textContent : ''; // Tetap kirim nama juga jika backend butuh
-
-        // Hapus entri form data lama yang mungkin hanya string nama jika ada
-        // delete profileData['province_name']; // Hapus yang dari form entries default
-        // delete profileData['city_name'];     // Hapus yang dari form entries default
-
+        // Remove province and city from update data since they're readonly
+        delete profileData.province_name;
+        delete profileData.city_name;
 
         try {
-            // Gunakan apiPatch dari apiService
             const result = await apiPatch('/users/update-profile', profileData);
             if (result.status === 'success') {
-                console.log('Profile updated:', result.data.user);
-                alert('Profile updated successfully!');
-                // Update data user di localStorage dan state komponen
+                alert('Profile berhasil diperbarui!');
                 this.user = result.data.user;
                 localStorage.setItem('user', JSON.stringify(this.user));
-                // Perbarui tampilan UI profil
                 this.updateUIWithUserProfile();
-                // Dispatch event agar komponen lain tahu profil berubah (misal navbar)
-                const profileUpdatedEvent = new CustomEvent('userProfileUpdated', { detail: { user: this.user } });
+                
+                const profileUpdatedEvent = new CustomEvent('userProfileUpdated', { 
+                    detail: { user: this.user } 
+                });
                 window.dispatchEvent(profileUpdatedEvent);
             } else {
                 console.error('Failed to update profile:', result.message, result.errors);
-                alert('Failed to update profile: ' + result.message + (result.errors ? '\n' + result.errors.map(e => e.msg).join('\n') : ''));
+                alert('Gagal memperbarui profil: ' + result.message + 
+                      (result.errors ? '\n' + result.errors.map(e => e.msg).join('\n') : ''));
             }
         } catch (error) {
             console.error('Error updating profile:', error);
-            // apiService sudah menangani 401/403
-            alert('An error occurred while updating profile.');
+            alert('Terjadi kesalahan saat memperbarui profil.');
         }
     }
 
-    // TODO: Metode untuk handle form update password
-    // async handleUpdatePassword(event) { ... gunakan apiPatch('/users/update-password', { currentPassword, newPassword }) }
+    async handleUpdatePassword(event) {
+        event.preventDefault();
 
+        const form = event.target;
+        const formData = new FormData(form);
+        const passwordData = Object.fromEntries(formData.entries());
 
-    // ================================================================
-    // Metode untuk update UI
-    // ================================================================
+        try {
+            const result = await apiPatch('/users/update-password', passwordData);
+            if (result.status === 'success') {
+                // Show success modal
+                this.showSuccessModal();
+                form.reset(); // Clear the form
+            } else {
+                console.error('Failed to update password:', result.message);
+                alert('Gagal mengubah kata sandi: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error updating password:', error);
+            alert('Terjadi kesalahan saat mengubah kata sandi.');
+        }
+    }
+
+    showSuccessModal() {
+        const modal = this.querySelector('#success-modal');
+        const loginBtn = this.querySelector('#login-redirect-btn');
+        
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('show');
+            
+            // Setup login redirect button
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    // Clear auth data and redirect to login
+                    clearAuthData();
+                    window.location.href = '/#/login';
+                });
+            }
+        }
+    }
+
     updateUIWithUserProfile() {
         if (this.user) {
-            // Isi elemen HTML dengan data profil pengguna
             const userNameSpan = this.querySelector('#user-name');
             const userEmailSpan = this.querySelector('#user-email');
             const userProvinceSpan = this.querySelector('#user-province');
             const userCitySpan = this.querySelector('#user-city');
+            const userHobbySpan = this.querySelector('#user-hobby');
             const updateNameInput = this.querySelector('#update-name');
-            // Dropdown province dan city akan diisi secara terpisah oleh logika wilayah
-            // const updateProvinceSelect = this.querySelector('#update-province'); // Tidak perlu di sini
-            // const updateCitySelect = this.querySelector('#update-city');     // Tidak perlu di sini
-
+            const updateHobbyInput = this.querySelector('#update-hobby');
+            const updateProvinceInput = this.querySelector('#update-province');
+            const updateCityInput = this.querySelector('#update-city');
 
             if (userNameSpan) userNameSpan.textContent = this.user.name;
             if (userEmailSpan) userEmailSpan.textContent = this.user.email;
-            if (userProvinceSpan) userProvinceSpan.textContent = this.user.province_name || '-'; // Tampilkan '-' jika kosong
-            if (userCitySpan) userCitySpan.textContent = this.user.city_name || '-';     // Tampilkan '-' jika kosong
+            if (userProvinceSpan) userProvinceSpan.textContent = this.user.province_name || '-';
+            if (userCitySpan) userCitySpan.textContent = this.user.city_name || '-';
+            if (userHobbySpan) userHobbySpan.textContent = this.user.hobby || '-';
 
-            // Isi form update profil dengan data user saat ini (kecuali wilayah)
             if (updateNameInput) updateNameInput.value = this.user.name || '';
-
-            // Set nilai dropdown wilayah setelah dropdown terisi dan user data didapat
-            // Logika pemanggilan setWilayahDropdowns() dipindahkan ke fetchUserProfile()
+            if (updateHobbyInput) updateHobbyInput.value = this.user.hobby || '';
+            if (updateProvinceInput) updateProvinceInput.value = this.user.province_name || '';
+            if (updateCityInput) updateCityInput.value = this.user.city_name || '';
         } else {
-            // Tampilkan loading atau pesan jika data user belum ada
             const profileInfoDiv = this.querySelector('#profile-info');
             if (profileInfoDiv) profileInfoDiv.innerHTML = '<p>Loading profile...</p>';
         }
     }
 
-
-    // ================================================================
-    // Metode untuk setup/remove Event Listeners
-    // ================================================================
     setupEventListeners() {
-        // Tambahkan event listener untuk form update profil
         const updateProfileForm = this.querySelector('#update-profile-form');
         if (updateProfileForm) {
             updateProfileForm.addEventListener('submit', this.handleUpdateProfile);
         }
 
-        // TODO: Tambahkan event listener untuk form update password jika ada
-        // const updatePasswordForm = this.querySelector('#update-password-form');
-        // if (updatePasswordForm) {
-        //     updatePasswordForm.addEventListener('submit', this.handleUpdatePassword);
-        // }
-
-        // Event listener untuk dropdown provinsi di form update (setup dipindah ke setupProvinceChangeListener)
+        const updatePasswordForm = this.querySelector('#update-password-form');
+        if (updatePasswordForm) {
+            updatePasswordForm.addEventListener('submit', this.handleUpdatePassword);
+        }
     }
 
     removeEventListeners() {
-        // Hapus event listener saat disconnectedCallback
         const updateProfileForm = this.querySelector('#update-profile-form');
         if (updateProfileForm) {
             updateProfileForm.removeEventListener('submit', this.handleUpdateProfile);
         }
-        // TODO: Hapus event listener update password
 
-        // Event listener untuk province change di form update (penghapusan dipindah ke disconnectedCallback)
-    }
-
-    // ================================================================
-    // Metode untuk mengelola dropdown wilayah (Disalin dari register-page)
-    // ================================================================
-
-    // Method to fetch provinces from external API
-    async fetchProvinces() {
-        const provinceSelect = this.querySelector('#update-province'); // Gunakan ID yang benar
-        if (!provinceSelect) return; // Pastikan elemen ada
-
-        // Clear existing options except the first one
-        provinceSelect.innerHTML = '<option value="">Select Province</option>';
-
-        try {
-            const response = await fetch('https://kanglerian.my.id/api-wilayah-indonesia/api/provinces.json');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const provinces = await response.json();
-            this.populateProvincesDropdown(provinces);
-        } catch (error) {
-            console.error('Error fetching provinces:', error);
-            // alert('Failed to load provinces. Please try again later.'); // Mungkin terlalu mengganggu di halaman profil
+        const updatePasswordForm = this.querySelector('#update-password-form');
+        if (updatePasswordForm) {
+            updatePasswordForm.removeEventListener('submit', this.handleUpdatePassword);
         }
     }
-
-    // Method to populate the province dropdown
-    populateProvincesDropdown(provinces) {
-        const provinceSelect = this.querySelector('#update-province'); // Gunakan ID yang benar
-        if (provinceSelect) {
-            provinces.forEach(province => {
-                const option = document.createElement('option');
-                option.value = province.id; // Use province ID as value (penting untuk fetch cities dan kirim ke backend)
-                option.textContent = province.name; // Display province name
-                provinceSelect.appendChild(option);
-            });
-            // Setelah mengisi dropdown provinsi, panggil setWilayahDropdowns untuk set nilai awal jika user data sudah ada
-            // Ini akan dipanggil setelah fetchUserProfile selesai
-        }
-    }
-
-    // Setup event listener for province select change
-    setupProvinceChangeListener() {
-        const provinceSelect = this.querySelector('#update-province'); // Gunakan ID yang benar
-        if (provinceSelect) {
-            // Hapus listener lama jika ada untuk menghindari duplikasi
-            provinceSelect.removeEventListener('change', this.handleProvinceChangeForUpdateForm);
-            provinceSelect.addEventListener('change', this.handleProvinceChangeForUpdateForm); // Gunakan handler yang dibind
-        }
-    }
-
-    // Handler for province select change (diubah namanya sedikit agar jelas untuk update form)
-    async handleProvinceChangeForUpdateForm(event) {
-        const provinceId = event.target.value;
-        const citySelect = this.querySelector('#update-city'); // Gunakan ID yang benar
-        if (!citySelect) return; // Pastikan elemen ada
-
-        // Reset city dropdown
-        citySelect.innerHTML = '<option value="">Select City</option>';
-        citySelect.disabled = true;
-
-        if (provinceId) {
-            // Tunggu hasil fetchCitiesByProvinceId sebelum mengaktifkan dropdown
-            await this.fetchCitiesByProvinceId(provinceId);
-            citySelect.disabled = false; // Aktifkan city select setelah fetching
-        }
-        // Mengembalikan cities data untuk digunakan di setWilayahDropdowns
-        // Jika Anda tidak menggunakan cities di setWilayahDropdowns, baris ini bisa dihapus
-        // For simplicity, let's just return it for now, might be useful later
-        // This requires fetchCitiesByProvinceId to return the cities array
-        // Let's update fetchCitiesByProvinceId to return the array
-        // Or just let setWilayahDropdowns call fetchCitiesByProvinceId directly
-        // Let's stick to the original plan of setWilayahDropdowns calling fetchCities
-        // So no need to return anything here.
-    }
-
-    // Method to fetch cities by province ID from external API
-    async fetchCitiesByProvinceId(provinceId) {
-        const citySelect = this.querySelector('#update-city'); // Gunakan ID yang benar
-        if (!citySelect) return []; // Pastikan elemen ada, kembalikan array kosong jika tidak
-
-        // Disable city select while fetching
-        citySelect.disabled = true;
-
-        try {
-            const response = await fetch(`https://kanglerian.my.id/api-wilayah-indonesia/api/regencies/${provinceId}.json`);
-            if (!response.ok) {
-                if (response.status === 404) {
-                    console.warn(`No cities found for province ID: ${provinceId}`);
-                    this.populateCitiesDropdown([]); // Populate with empty array
-                    citySelect.disabled = true; // Keep disabled
-                    return []; // Return empty array on 404
-                }
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const cities = await response.json();
-            this.populateCitiesDropdown(cities);
-            // citySelect.disabled = false; // Diaktifkan di handleProvinceChangeForUpdateForm setelah await
-            return cities; // Return the fetched cities array
-        } catch (error) {
-            console.error(`Error fetching cities for province ${provinceId}:`, error);
-            // alert('Failed to load cities. Please try again later.');
-            this.populateCitiesDropdown([]); // Clear cities on error
-            citySelect.disabled = true; // Keep disabled on error
-            return []; // Return empty array on error
-        }
-    }
-
-    // Method to populate the city dropdown
-    populateCitiesDropdown(cities) {
-        const citySelect = this.querySelector('#update-city'); // Gunakan ID yang benar
-        if (citySelect) {
-            citySelect.innerHTML = '<option value="">Select City</option>'; // Reset options
-            cities.forEach(city => {
-                const option = document.createElement('option');
-                option.value = city.id; // Use city ID as value (penting untuk kirim ke backend)
-                option.textContent = city.name; // Display city name
-                citySelect.appendChild(option);
-            });
-        }
-    }
-
-    // Metode untuk mengatur nilai dropdown wilayah berdasarkan data user
-    async setWilayahDropdowns() {
-        const provinceSelect = this.querySelector('#update-province');
-        const citySelect = this.querySelector('#update-city');
-
-        if (this.user && provinceSelect && citySelect) {
-            // Atur provinsi jika user memiliki province_id
-            if (this.user.province_id) {
-                provinceSelect.value = this.user.province_id;
-
-                // Setelah provinsi diatur, fetch dan atur kota berdasarkan city_id user
-                // Panggil fetchCitiesByProvinceId langsung dengan province_id user
-                const cities = await this.fetchCitiesByProvinceId(this.user.province_id);
-
-                // Setelah cities terisi, atur kota jika user memiliki city_id
-                if (this.user.city_id && citySelect) {
-                    citySelect.value = this.user.city_id;
-                }
-                // Pastikan dropdown kota aktif jika provinsi user ada
-                citySelect.disabled = false;
-
-            } else {
-                // Jika user tidak punya province_id, pastikan dropdown kota nonaktif
-                citySelect.disabled = true;
-            }
-        }
-    }
-
-
 }
 
-// Definisikan Custom Element
 customElements.define('profile-page', ProfilePage);

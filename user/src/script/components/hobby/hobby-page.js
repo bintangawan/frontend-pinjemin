@@ -2,7 +2,7 @@ import { authenticatedRequest } from '../../utils/apiService.js';
 import Utils from '../../utils/utils.js';
 import { io } from 'socket.io-client';
 
-class CommunityPage extends HTMLElement {
+class HobbyPage extends HTMLElement {
   constructor() {
     super();
     this._messages = [];
@@ -45,7 +45,7 @@ class CommunityPage extends HTMLElement {
   async fetchMessageHistory(page = 1) {
     try {
       this._isLoading = true;
-      const response = await authenticatedRequest(`/community-messages?page=${page}&limit=${this._messagesPerPage}`, 'GET');
+      const response = await authenticatedRequest(`/hobby-messages?page=${page}&limit=${this._messagesPerPage}`, 'GET');
       if (response.status === 'success') {
         const newMessages = response.data || [];
         
@@ -60,6 +60,7 @@ class CommunityPage extends HTMLElement {
         this._currentPage = page;
       }
     } catch (error) {
+      console.error('Error fetching message history:', error);
     } finally {
       this._isLoading = false;
     }
@@ -104,11 +105,21 @@ class CommunityPage extends HTMLElement {
 
     this._socket.on('connect', () => {
       this._isSocketConnected = true;
-      this._socket.emit('joinCommunity');
+      this._socket.emit('joinHobby');
       this._setupInputListeners();
     });
 
-    this._socket.on('newCommunityMessage', this._handleNewMessage);
+    this._socket.on('newHobbyMessage', this._handleNewMessage);
+    
+    this._socket.on('hobbyError', (error) => {
+      console.error('Hobby error:', error);
+      alert('Error: ' + error.error);
+    });
+
+    this._socket.on('hobbyMessageError', (error) => {
+      console.error('Hobby message error:', error);
+      alert('Error: ' + error.error);
+    });
   }
 
   _setupInputListeners() {
@@ -118,7 +129,7 @@ class CommunityPage extends HTMLElement {
     const sendMessage = () => {
       const message = input?.value.trim();
       if (message && this._isSocketConnected) {
-        this._socket.emit('sendCommunityMessage', {
+        this._socket.emit('sendHobbyMessage', {
           content: message
         });
         input.value = '';
@@ -212,7 +223,7 @@ class CommunityPage extends HTMLElement {
   }
 
   render() {
-    const provinceName = this._messages[0]?.sender_province_name || '';
+    const hobbyName = this._messages[0]?.sender_hobby || '';
     const currentUserId = localStorage.getItem('userId');
 
     this.innerHTML = `
@@ -221,7 +232,7 @@ class CommunityPage extends HTMLElement {
           box-sizing: border-box;
         }
         
-        .community-container {
+        .hobby-container {
           max-width: 800px;
           margin: 0 auto;
           height: 80vh;
@@ -306,7 +317,7 @@ class CommunityPage extends HTMLElement {
           width: 36px;
           height: 36px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -331,9 +342,9 @@ class CommunityPage extends HTMLElement {
         }
         
         .message.own .message-bubble {
-          background: #4299e1;
+          background: #ed8936;
           color: white;
-          border-color: #4299e1;
+          border-color: #ed8936;
         }
         
         .message-meta {
@@ -383,9 +394,9 @@ class CommunityPage extends HTMLElement {
         }
         
         .message-input-field:focus {
-          border-color: #4299e1;
+          border-color: #ed8936;
           background: #ffffff;
-          box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+          box-shadow: 0 0 0 3px rgba(237, 137, 54, 0.1);
         }
         
         .message-input-field::placeholder {
@@ -397,7 +408,7 @@ class CommunityPage extends HTMLElement {
           height: 44px;
           border: none;
           border-radius: 50%;
-          background: #4299e1;
+          background: #ed8936;
           color: white;
           cursor: pointer;
           display: flex;
@@ -408,7 +419,7 @@ class CommunityPage extends HTMLElement {
         }
         
         .send-button:hover {
-          background: #3182ce;
+          background: #dd6b20;
           transform: scale(1.05);
         }
         
@@ -438,7 +449,7 @@ class CommunityPage extends HTMLElement {
         }
         
         @media (max-width: 768px) {
-          .community-container {
+          .hobby-container {
             height: 90vh;
             border-radius: 0;
             border: none;
@@ -461,11 +472,11 @@ class CommunityPage extends HTMLElement {
           }
         }
       </style>
-      <div class="community-container">
+      <div class="hobby-container">
         <div class="chat-header">
           <div class="online-indicator"></div>
           <div class="chat-header-info">
-            <h3>Komunitas ${provinceName}</h3>
+            <h3>Hobby ${hobbyName}</h3>
             <p>${this._isSocketConnected ? 'Online' : 'Connecting...'}</p>
           </div>
         </div>
@@ -477,9 +488,9 @@ class CommunityPage extends HTMLElement {
           
           ${this._messages.length === 0 ? 
             `<div class="empty-state">
-              <div class="empty-state-icon">💬</div>
-              <p>Belum ada pesan dalam komunitas ini</p>
-              <p>Mulai percakapan dengan mengirim pesan pertama!</p>
+              <div class="empty-state-icon">🎯</div>
+              <p>Belum ada pesan dalam grup hobby ini</p>
+              <p>Mulai percakapan dengan sesama penggemar hobby!</p>
             </div>` :
             this._messages.map(msg => {
               const isOwn = currentUserId && msg.sender_id == currentUserId;
@@ -502,7 +513,7 @@ class CommunityPage extends HTMLElement {
         </div>
         
         <div class="message-input-container">
-          <textarea class="message-input-field" placeholder="Ketik pesan..." rows="1"></textarea>
+          <textarea class="message-input-field" placeholder="Bagikan tentang hobby Anda..." rows="1"></textarea>
           <button class="send-button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -523,4 +534,4 @@ class CommunityPage extends HTMLElement {
   }
 }
 
-customElements.define('community-page', CommunityPage);
+customElements.define('hobby-page', HobbyPage);

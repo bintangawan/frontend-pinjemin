@@ -121,8 +121,6 @@ class MySellerTransactionsPage extends HTMLElement {
         }).join('')}
              </div>
         `;
-        // TODO: Setup event delegation for Detail/Status Update buttons
-        // this.setupEventListeners();
     }
 
 
@@ -154,8 +152,6 @@ class MySellerTransactionsPage extends HTMLElement {
             this.renderSellerTransactions(); // Render the list (either with data or error/empty message)
         }
     }
-
-    // TODO: Add setupEventListeners and handle status update button clicks later
 }
 
 customElements.define('my-seller-transactions-page', MySellerTransactionsPage);

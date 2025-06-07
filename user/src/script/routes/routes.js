@@ -294,4 +294,10 @@ export const routes = {
     manageFooter(true)
     mainContent.innerHTML = "<community-page></community-page>"
   },
+  // Community page - public access (no authentication required)
+  "/hobby": (mainContent) => {
+    manageAppBar(true)
+    manageFooter(true)
+    mainContent.innerHTML = "<hobby-page></hobby-page>"
+  },
 }

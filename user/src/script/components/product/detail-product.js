@@ -1990,7 +1990,6 @@ class DetailProduct extends HTMLElement {
   }
 
   async triggerMLRefresh(itemId) {
-    console.log("Triggering ML backend data refresh for item:", itemId)
     try {
       await fetch("http://localhost:5001/api/refresh_data", {
         method: "POST",
@@ -1999,7 +1998,6 @@ class DetailProduct extends HTMLElement {
         },
         body: JSON.stringify({}),
       })
-      console.log("ML backend data refresh triggered.")
     } catch (refreshError) {
       console.warn("Failed to trigger ML backend data refresh:", refreshError)
     }

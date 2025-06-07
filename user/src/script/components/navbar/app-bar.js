@@ -12,7 +12,6 @@ class AppBar extends HTMLElement {
     }
 
     connectedCallback() {
-        console.log('AppBar Component Connected');
         this.render();
         this._setupCategoryDropdownToggle();
         this.setupProfileDropdownToggle();
@@ -31,7 +30,6 @@ class AppBar extends HTMLElement {
     }
 
     disconnectedCallback() {
-        console.log('AppBar Component Disconnected');
         
         // Remove event listeners
         window.removeEventListener('userLoggedIn', this.handleLoginStatusChange);
@@ -89,6 +87,21 @@ class AppBar extends HTMLElement {
             * {
                 font-family: 'Poppins', sans-serif;
             }
+                /* Modal animation */
+#logout-modal.show {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
         </style>
             <!-- Fixed Header -->
             <div class="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
@@ -108,7 +121,7 @@ class AppBar extends HTMLElement {
                     <!-- Logo (Center on mobile, Left on desktop) -->
                     <div class="flex items-center justify-center md:justify-start flex-1 md:flex-none">
                         <div class="text-xl font-bold text-gray-800 flex items-center">
-                            <img src="./pinjemin.png" class="mr-2 h-16 inline-block" alt="Pinjemin Logo">
+                            <img src="./logo-pinjemin.png" class="mr-2 h-16 inline-block" alt="Pinjemin Logo">
                         </div>
                     </div>
 
@@ -119,6 +132,9 @@ class AppBar extends HTMLElement {
                         </a>
                         <a href="/#/community" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
                             Komunitas
+                        </a>
+                        <a href="/#/hobby" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
+                            Hobby
                         </a>
                         <a href="/#/my-rentals" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 user-authenticated-nav-link hidden">
                             Pinjaman Saya
@@ -204,7 +220,7 @@ class AppBar extends HTMLElement {
                 <!-- Drawer Header -->
                 <div class="flex items-center justify-between p-4 border-b border-gray-200">
                     <div class="flex items-center space-x-3">
-                        <img src="./pinjemin.png" class="h-8" alt="Pinjemin Logo">
+                        <img src="./logo-pinjemin.png" class="h-8" alt="Pinjemin Logo">
                         <span class="text-lg font-bold text-gray-800">Pinjemin</span>
                     </div>
                     <button id="close-drawer-button" class="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
@@ -262,6 +278,14 @@ class AppBar extends HTMLElement {
                                     Komunitas
                                 </a>
                             </li>
+                            <li>
+                                <a href="/#/hobby" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                    <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                    Hobby
+                                </a>
+                            </li>
                             
                             <!-- Authenticated Links -->
                             <li class="drawer-authenticated-nav-link hidden">
@@ -310,6 +334,26 @@ class AppBar extends HTMLElement {
                     </div>
                 </div>
             </div>
+            <!-- Logout Confirmation Modal -->
+<div id="logout-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Konfirmasi Logout</h3>
+        <p class="text-gray-600 mb-6">Apakah Anda yakin ingin keluar?</p>
+        <div class="flex gap-3">
+            <button id="cancel-logout-btn" class="flex-1 bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-xl hover:bg-gray-300 transition-all duration-200">
+                Batal
+            </button>
+            <button id="confirm-logout-btn" class="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold py-3 px-6 rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-200">
+                Ya, Keluar
+            </button>
+        </div>
+    </div>
+</div>
         `;
     }
 
@@ -368,13 +412,43 @@ class AppBar extends HTMLElement {
         }
     }
 
+    showLogoutModal() {
+    const modal = this.querySelector('#logout-modal');
+    const cancelBtn = this.querySelector('#cancel-logout-btn');
+    const confirmBtn = this.querySelector('#confirm-logout-btn');
+    
+    if (modal) {
+        modal.classList.remove('hidden');
+        
+        // Setup event listeners
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                modal.classList.add('hidden');
+            };
+        }
+        
+        if (confirmBtn) {
+            confirmBtn.onclick = () => {
+                modal.classList.add('hidden');
+                clearAuthData();
+                this.closeDrawer();
+            };
+        }
+        
+        // Close modal when clicking outside
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        };
+    }
+}
+
     handleLogout = () => {
-        clearAuthData();
-        this.closeDrawer(); // Close drawer after logout
+        this.showLogoutModal();
     }
 
     handleLoginStatusChange = () => {
-        console.log('Login/Logout status change detected.');
         this.updateNavbarBasedOnLoginStatus();
         this.setupProfileDropdownToggle();
         this.setupLogoutListener();
@@ -484,18 +558,15 @@ class AppBar extends HTMLElement {
 
     // Mobile Menu Drawer Toggle
     setupMobileMenuToggle() {
-        console.log('Setting up mobile drawer toggle...');
         const mobileMenuButton = this.querySelector('#mobile-menu-button');
         const mobileDrawer = this.querySelector('#mobile-drawer');
         const drawerOverlay = this.querySelector('#drawer-overlay');
         const closeDrawerButton = this.querySelector('#close-drawer-button');
 
         if (mobileMenuButton && mobileDrawer && drawerOverlay) {
-            console.log('Mobile drawer elements found. Setting up listeners.');
             
             // Open drawer
             this._mobileMenuButtonHandler = (event) => {
-                console.log('Mobile menu button clicked.');
                 this.openDrawer();
             };
             mobileMenuButton.addEventListener('click', this._mobileMenuButtonHandler);
@@ -519,7 +590,6 @@ class AppBar extends HTMLElement {
             const drawerLinks = mobileDrawer.querySelectorAll('a');
             drawerLinks.forEach(link => {
                 link.addEventListener('click', () => {
-                    console.log('Drawer link clicked, closing drawer.');
                     this.closeDrawer();
                 });
             });
@@ -555,8 +625,6 @@ class AppBar extends HTMLElement {
             
             // Prevent body scroll when drawer is open
             document.body.style.overflow = 'hidden';
-            
-            console.log('Drawer opened');
         }
     }
 
@@ -575,8 +643,6 @@ class AppBar extends HTMLElement {
             
             // Restore body scroll
             document.body.style.overflow = '';
-            
-            console.log('Drawer closed');
         }
     }
 

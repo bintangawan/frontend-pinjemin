@@ -34,18 +34,15 @@ class LoginPage extends HTMLElement {
   }
 
   setupMobileMenuToggle() {
-    console.log("Setting up mobile drawer toggle...")
     const mobileMenuButton = this.querySelector("#mobile-menu-button")
     const mobileDrawer = this.querySelector("#mobile-drawer")
     const drawerOverlay = this.querySelector("#drawer-overlay")
     const closeDrawerButton = this.querySelector("#close-drawer-button")
 
     if (mobileMenuButton && mobileDrawer && drawerOverlay) {
-      console.log("Mobile drawer elements found. Setting up listeners.")
 
       // Open drawer
       this._mobileMenuButtonHandler = (event) => {
-        console.log("Mobile menu button clicked.")
         this.openDrawer()
       }
       mobileMenuButton.addEventListener("click", this._mobileMenuButtonHandler)
@@ -69,7 +66,6 @@ class LoginPage extends HTMLElement {
       const drawerLinks = mobileDrawer.querySelectorAll("a")
       drawerLinks.forEach((link) => {
         link.addEventListener("click", () => {
-          console.log("Drawer link clicked, closing drawer.")
           this.closeDrawer()
         })
       })
@@ -104,8 +100,6 @@ class LoginPage extends HTMLElement {
 
       // Prevent body scroll when drawer is open
       document.body.style.overflow = "hidden"
-
-      console.log("Drawer opened")
     }
   }
 
@@ -124,8 +118,6 @@ class LoginPage extends HTMLElement {
 
       // Restore body scroll
       document.body.style.overflow = ""
-
-      console.log("Drawer closed")
     }
   }
 
@@ -173,7 +165,7 @@ class LoginPage extends HTMLElement {
                 <!-- Logo (Center on mobile, Left on desktop) -->
                 <div class="flex items-center justify-center md:justify-start flex-1 md:flex-none">
                     <div class="text-xl font-bold text-gray-800 flex items-center">
-                        <img src="./pinjemin.png" class="mr-2 h-16 inline-block" alt="Pinjemin Logo">
+                        <img src="./logo-pinjemin.png" class="mr-2 h-16 inline-block" alt="Pinjemin Logo">
                     </div>
                 </div>
 
@@ -207,7 +199,7 @@ class LoginPage extends HTMLElement {
             <!-- Drawer Header -->
             <div class="flex items-center justify-between p-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
-                    <img src="./pinjemin.png" class="h-8" alt="Pinjemin Logo">
+                    <img src="./logo-pinjemin.png" class="h-8" alt="Pinjemin Logo">
                     <span class="text-lg font-bold text-gray-800">Pinjemin</span>
                 </div>
                 <button id="close-drawer-button" class="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
@@ -251,7 +243,7 @@ class LoginPage extends HTMLElement {
                 <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
                     <!-- Logo -->
                     <div class="text-center mb-6">
-                        <img class="mx-auto h-16 w-16 rounded-xl object-cover shadow-lg" src="./pinjemin.png" alt="Pinjemin">
+                        <img class="mx-auto h-16 w-16 rounded-xl object-cover shadow-lg" src="./logo-pinjemin.png" alt="Pinjemin">
                         <h2 class="mt-4 text-2xl font-bold text-gray-900">Welcome Back</h2>
                         <p class="mt-1 text-sm text-gray-600">Sign in to your account</p>
                     </div>
@@ -370,8 +362,6 @@ class LoginPage extends HTMLElement {
       const formData = new FormData(form)
       const data = Object.fromEntries(formData.entries())
 
-      console.log("Sending login data to API:", data)
-
       this.setLoading(true)
 
       try {
@@ -387,7 +377,6 @@ class LoginPage extends HTMLElement {
 
         if (response.ok) {
           if (result.status === "success") {
-            console.log("Login successful:", result)
 
             // Store token and user data in localStorage
             localStorage.setItem("token", result.token)
@@ -407,15 +396,12 @@ class LoginPage extends HTMLElement {
               window.location.href = "/#/home"
             }, 1500)
           } else {
-            console.error("Login failed (API error):", result.message)
             this.showToast("Login Failed", result.message || "Invalid credentials", "error")
           }
         } else {
-          console.error("Login failed (HTTP error):", response.status, result.message)
           this.showToast("Login Failed", result.message || "Please check your credentials", "error")
         }
       } catch (error) {
-        console.error("Error during login API call:", error)
         this.showToast("Connection Error", "Unable to connect to server. Please try again.", "error")
       } finally {
         this.setLoading(false)

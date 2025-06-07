@@ -51,18 +51,15 @@ class RegisterPage extends HTMLElement {
   }
 
   setupMobileMenuToggle() {
-    console.log("Setting up mobile drawer toggle...")
     const mobileMenuButton = this.querySelector("#mobile-menu-button")
     const mobileDrawer = this.querySelector("#mobile-drawer")
     const drawerOverlay = this.querySelector("#drawer-overlay")
     const closeDrawerButton = this.querySelector("#close-drawer-button")
 
     if (mobileMenuButton && mobileDrawer && drawerOverlay) {
-      console.log("Mobile drawer elements found. Setting up listeners.")
 
       // Open drawer
       this._mobileMenuButtonHandler = (event) => {
-        console.log("Mobile menu button clicked.")
         this.openDrawer()
       }
       mobileMenuButton.addEventListener("click", this._mobileMenuButtonHandler)
@@ -86,7 +83,6 @@ class RegisterPage extends HTMLElement {
       const drawerLinks = mobileDrawer.querySelectorAll("a")
       drawerLinks.forEach((link) => {
         link.addEventListener("click", () => {
-          console.log("Drawer link clicked, closing drawer.")
           this.closeDrawer()
         })
       })
@@ -122,7 +118,6 @@ class RegisterPage extends HTMLElement {
       // Prevent body scroll when drawer is open
       document.body.style.overflow = "hidden"
 
-      console.log("Drawer opened")
     }
   }
 
@@ -141,8 +136,6 @@ class RegisterPage extends HTMLElement {
 
       // Restore body scroll
       document.body.style.overflow = ""
-
-      console.log("Drawer closed")
     }
   }
 
@@ -204,7 +197,7 @@ class RegisterPage extends HTMLElement {
                 <!-- Logo (Center on mobile, Left on desktop) -->
                 <div class="flex items-center justify-center md:justify-start flex-1 md:flex-none">
                     <div class="text-xl font-bold text-gray-800 flex items-center">
-                        <img src="./pinjemin.png" class="mr-2 h-16 inline-block" alt="Pinjemin Logo">
+                        <img src="./logo-pinjemin.png" class="mr-2 h-16 inline-block" alt="Pinjemin Logo">
                     </div>
                 </div>
 
@@ -238,7 +231,7 @@ class RegisterPage extends HTMLElement {
             <!-- Drawer Header -->
             <div class="flex items-center justify-between p-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
-                    <img src="./pinjemin.png" class="h-8" alt="Pinjemin Logo">
+                    <img src="./logo-pinjemin.png" class="h-8" alt="Pinjemin Logo">
                     <span class="text-lg font-bold text-gray-800">Pinjemin</span>
                 </div>
                 <button id="close-drawer-button" class="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
@@ -282,7 +275,7 @@ class RegisterPage extends HTMLElement {
                 <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg">
                     <!-- Logo -->
                     <div class="text-center mb-6">
-                        <img class="mx-auto h-16 w-16 rounded-xl object-cover shadow-lg" src="./pinjemin.png" alt="Pinjemin">
+                        <img class="mx-auto h-16 w-16 rounded-xl object-cover shadow-lg" src="./logo-pinjemin.png" alt="Pinjemin">
                         <h2 class="mt-4 text-2xl font-bold text-gray-900">Create Account</h2>
                         <p class="mt-1 text-sm text-gray-600">Join us and start your journey</p>
                     </div>
@@ -367,6 +360,20 @@ class RegisterPage extends HTMLElement {
                                 placeholder="Confirm your password"
                             >
                         </div>
+                        <div>
+                          <label for="hoby" class="block text-sm font-medium text-gray-700 mb-1">Hobby</label>
+                          <select 
+                              id="hobby" 
+                              name="hobby" 
+                              required 
+                              class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          >
+                              <option value="">Select Hobby</option>
+                              <option value="MASAK">Masak</option>
+                              <option value="MEMBACA">Membaca</option>
+                              <option value="FOTOGRAFI">Fotografi</option>
+                          </select>
+                        </div>
 
                         <button 
                             type="submit" 
@@ -446,7 +453,6 @@ class RegisterPage extends HTMLElement {
       const provinces = await response.json()
       this.populateProvincesDropdown(provinces)
     } catch (error) {
-      console.error("Error fetching provinces:", error)
       this.showToast("Error", "Failed to load provinces. Please try again later.", "error")
     }
   }
@@ -492,7 +498,6 @@ class RegisterPage extends HTMLElement {
       this.populateCitiesDropdown(cities)
       citySelect.disabled = false
     } catch (error) {
-      console.error(`Error fetching cities for province ${provinceId}:`, error)
       this.showToast("Error", "Failed to load cities. Please try again later.", "error")
       citySelect.disabled = true
     }
@@ -548,8 +553,6 @@ class RegisterPage extends HTMLElement {
       data.province_name = provinceName
       data.city_name = cityName
 
-      console.log("Sending data to API:", data)
-
       this.setLoading(true)
 
       try {
@@ -565,7 +568,6 @@ class RegisterPage extends HTMLElement {
 
         if (response.ok) {
           if (result.status === "success") {
-            console.log("Registration successful:", result)
             localStorage.setItem("token", result.token)
             localStorage.setItem("user", JSON.stringify(result.data.user))
 
@@ -582,20 +584,17 @@ class RegisterPage extends HTMLElement {
               window.location.href = "/#/login"
             }, 1500)
           } else {
-            console.error("Registration failed (API error):", result.message, result.errors)
             const errorMessage =
               result.message + (result.errors ? "\n" + result.errors.map((e) => e.msg).join(", ") : "")
             this.showToast("Registration Failed", errorMessage, "error")
           }
         } else {
-          console.error("Registration failed (HTTP error):", response.status, result.message, result.errors)
           const errorMessage =
             result.message +
             (result.errors ? "\n" + result.errors.map((e) => e.msg).join(", ") : "An unexpected error occurred.")
           this.showToast("Registration Failed", errorMessage, "error")
         }
       } catch (error) {
-        console.error("Error during registration API call:", error)
         this.showToast("Connection Error", "Unable to connect to server. Please try again.", "error")
       } finally {
         this.setLoading(false)

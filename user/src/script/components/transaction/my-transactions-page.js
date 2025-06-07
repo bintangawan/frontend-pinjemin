@@ -7,10 +7,6 @@ class MyTransactionsPage extends HTMLElement {
         // State to hold transaction data
         this.transactions = [];
         this.transactionType = null; // 'buy' or 'rent', determined from URL
-
-        // Bind event handlers if not using arrow functions
-        // this.renderTransactions = this.renderTransactions.bind(this); // If not arrow function
-        // this.fetchTransactions = this.fetchTransactions.bind(this); // If not arrow function
     }
 
     _emptyContent() {
@@ -26,20 +22,14 @@ class MyTransactionsPage extends HTMLElement {
         }
 
         this._emptyContent(); // Clear initial content
-
-        // Determine transaction type from URL hash
         this.transactionType = this.getTransactionTypeFromUrl();
-        console.log('Fetching transactions of type:', this.transactionType);
 
         this.renderLayout(); // Render basic layout first
         this.fetchTransactions(this.transactionType); // Fetch transactions based on type
     }
 
     disconnectedCallback() {
-        // Cleanup if necessary (e.g., remove event listeners, though none added yet)
     }
-
-    // Method to determine transaction type from URL hash
     getTransactionTypeFromUrl() {
         const hash = window.location.hash;
         if (hash.includes('/my-rentals')) {
@@ -47,7 +37,6 @@ class MyTransactionsPage extends HTMLElement {
         } else if (hash.includes('/my-transactions')) {
             return 'buy';
         }
-        // Default or fallback if needed, though routing should handle this
         return null;
     }
 
@@ -132,8 +121,6 @@ class MyTransactionsPage extends HTMLElement {
                 `).join('')}
              </div>
         `;
-        // Note: Ensure transaction properties like item_name, type, status, total_price, rent_start_date, etc.,
-        // match the structure returned by your backend API\'s GET /transactions endpoint.
     }
 
 
@@ -142,7 +129,6 @@ class MyTransactionsPage extends HTMLElement {
         try {
             // Construct query parameters if type is specified
             const queryParams = type ? `?type=${type}` : '';
-            console.log(`Fetching transactions from /transactions${queryParams}`);
 
             // Use authenticatedRequest as this endpoint requires authentication
             const response = await authenticatedRequest(`/transactions${queryParams}`);

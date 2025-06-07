@@ -42,8 +42,8 @@ registerRoute(({ request }) => request.mode === "navigate", new NetworkOnly())
 const BASE_URL = "http://localhost:5000/api"
 const NOTIFICATION_CACHE = "notifications-cache"
 const APP_NAME = "Pinjemin"
-const DEFAULT_ICON = "/pinjemin.png"
-const DEFAULT_BADGE = "/pinjemin.png"
+const DEFAULT_ICON = "./logo-pinjemin.png"
+const DEFAULT_BADGE = "./logo-pinjemin.png"
 
 // Store notifications in IndexedDB for offline access
 async function storeNotification(notification) {

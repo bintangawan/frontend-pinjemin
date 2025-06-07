@@ -1,5 +1,7 @@
 import { apiGet, apiDelete, apiFormDataRequest } from "../../utils/apiService.js"
 import Swal from 'sweetalert2'
+import { SmallMap } from "../../components/SmallMap.js"
+import { GeocodingUtils } from "../../utils/geocodingUtils.js"
 
 const WILAYAH_BASE_URL = "https://kanglerian.my.id/api-wilayah-indonesia/api"
 
@@ -29,6 +31,12 @@ class MyItemsPage extends HTMLElement {
     this.items = []
     this.isLoading = false
     this.error = null
+
+    // Map instances
+    this.addItemMap = null
+    this.editItemMap = null
+    this.selectedLocation = null
+    this.editSelectedLocation = null
   }
 
   connectedCallback() {
@@ -39,6 +47,16 @@ class MyItemsPage extends HTMLElement {
 
   disconnectedCallback() {
     this.removeEventListeners()
+
+    // Cleanup maps
+    if (this.addItemMap) {
+      this.addItemMap.destroy()
+      this.addItemMap = null
+    }
+    if (this.editItemMap) {
+      this.editItemMap.destroy()
+      this.editItemMap = null
+    }
   }
 
   loadUserData() {
@@ -340,7 +358,12 @@ class MyItemsPage extends HTMLElement {
                     background-color: #2563eb;
                     border-color: #2563eb;
                 }
+
+                /* Leaflet styles */
+                #map { height: 180px; }
             </style>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
             <div class="container mx-auto px-4 py-8 font-poppins">
                 <h2 class="text-2xl font-bold mb-4">Item Saya (Toko Saya)</h2>
 
@@ -407,6 +430,23 @@ class MyItemsPage extends HTMLElement {
                                 <input type="hidden" name="city_id" value="${this.user?.city_id || ""}">
                                 <input type="hidden" name="city_name" value="${this.user?.city_name || ""}">
                             </div>
+                        </div>
+
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900 font-poppins font-bold">Lokasi pada Peta</label>
+                            <div class="space-y-2">
+                                <button type="button" id="get-current-location-add" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold transition-colors duration-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    Gunakan Lokasi Saat Ini
+                                </button>
+                                <div id="add-item-map" class="border border-gray-300 rounded-lg"></div>
+                                <p class="text-xs text-gray-500">Klik pada peta untuk memilih lokasi yang lebih spesifik</p>
+                            </div>
+                            <input type="hidden" name="latitude" id="add-latitude">
+                            <input type="hidden" name="longitude" id="add-longitude">
                         </div>
 
                         <div>
@@ -503,6 +543,23 @@ class MyItemsPage extends HTMLElement {
                         </div>
 
                         <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900 font-poppins font-bold">Lokasi pada Peta</label>
+                            <div class="space-y-2">
+                                <button type="button" id="get-current-location-edit" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold transition-colors duration-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    Gunakan Lokasi Saat Ini
+                                </button>
+                                <div id="edit-item-map" class="border border-gray-300 rounded-lg"></div>
+                                <p class="text-xs text-gray-500">Klik pada peta untuk memilih lokasi yang lebih spesifik</p>
+                            </div>
+                            <input type="hidden" name="latitude" id="edit-latitude">
+                            <input type="hidden" name="longitude" id="edit-longitude">
+                        </div>
+
+                        <div>
                             <label for="edit-item-photos" class="block mb-2 text-sm font-medium text-gray-900 font-poppins font-bold">Foto Item Baru (Multiple)</label>
                             <input type="file" id="edit-item-photos" name="photos" multiple accept="image/*" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none">
                         </div>
@@ -532,6 +589,22 @@ class MyItemsPage extends HTMLElement {
     
     // Setup event listeners setelah render
     this.setupEventListeners()
+
+    // Initialize edit map with item location or user's city
+    setTimeout(async () => {
+        if (this.editItemMap && this.user?.province_name) {
+            try {
+                await this.editItemMap.initializeMap(this.user.province_name, this.user.city_name)
+                
+                // If item has coordinates, set marker
+                if (this.editingItemData?.latitude && this.editingItemData?.longitude) {
+                    this.editItemMap.setMarker(this.editingItemData.latitude, this.editingItemData.longitude)
+                }
+            } catch (error) {
+                console.error('Error initializing edit map:', error)
+            }
+        }
+    }, 100)
   }
 
   renderItemsList() {
@@ -704,7 +777,128 @@ class MyItemsPage extends HTMLElement {
     }
     
     this.addEventListener("click", this.handlePaginationClick)
+
+    // Initialize maps and setup location buttons
+    this.initializeMaps()
+    this.setupLocationButtons()
   }
+
+  async initializeMaps() {
+    // Wait a bit for DOM to be ready
+    setTimeout(async () => {
+        try {
+            // Initialize add item map
+            this.addItemMap = new SmallMap('add-item-map', {
+                height: '300px',
+                defaultZoom: 12,
+                onLocationSelect: (lat, lng) => {
+                    this.selectedLocation = { lat, lng }
+                    document.getElementById('add-latitude').value = lat
+                    document.getElementById('add-longitude').value = lng
+                }
+            })
+
+            // Initialize edit item map
+            this.editItemMap = new SmallMap('edit-item-map', {
+                height: '300px',
+                defaultZoom: 12,
+                onLocationSelect: (lat, lng) => {
+                    this.editSelectedLocation = { lat, lng }
+                    document.getElementById('edit-latitude').value = lat
+                    document.getElementById('edit-longitude').value = lng
+                }
+            })
+
+            // Initialize add map with user's city
+            if (this.user?.province_name) {
+                await this.addItemMap.initializeMap(this.user.province_name, this.user.city_name)
+            }
+
+        } catch (error) {
+            console.error('Error initializing maps:', error)
+        }
+    }, 500)
+}
+
+setupLocationButtons() {
+    // Add item current location button
+    const addLocationBtn = this.querySelector('#get-current-location-add')
+    if (addLocationBtn) {
+        addLocationBtn.addEventListener('click', async () => {
+            try {
+                addLocationBtn.disabled = true
+                addLocationBtn.innerHTML = `
+                    <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Mengambil Lokasi...
+                `
+                
+                if (this.addItemMap && this.addItemMap.isMapReady()) {
+                    await this.addItemMap.getCurrentLocation()
+                } else {
+                    throw new Error('Map belum siap')
+                }
+            } catch (error) {
+                console.error('Error getting current location:', error)
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Mengambil Lokasi',
+                    text: 'Tidak dapat mengambil lokasi saat ini. Pastikan GPS aktif dan izin lokasi diberikan.',
+                    confirmButtonColor: '#ef4444'
+                })
+            } finally {
+                addLocationBtn.disabled = false
+                addLocationBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Gunakan Lokasi Saat Ini
+                `
+            }
+        })
+    }
+
+    // Edit item current location button
+    const editLocationBtn = this.querySelector('#get-current-location-edit')
+    if (editLocationBtn) {
+        editLocationBtn.addEventListener('click', async () => {
+            try {
+                editLocationBtn.disabled = true
+                editLocationBtn.innerHTML = `
+                    <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Mengambil Lokasi...
+                `
+                
+                if (this.editItemMap && this.editItemMap.isMapReady()) {
+                    await this.editItemMap.getCurrentLocation()
+                } else {
+                    throw new Error('Map belum siap')
+                }
+            } catch (error) {
+                console.error('Error getting current location:', error)
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Mengambil Lokasi',
+                    text: 'Tidak dapat mengambil lokasi saat ini. Pastikan GPS aktif dan izin lokasi diberikan.',
+                    confirmButtonColor: '#ef4444'
+                })
+            } finally {
+                editLocationBtn.disabled = false
+                editLocationBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Gunakan Lokasi Saat Ini
+                `
+            }
+        })
+    }
+}
 
   // Helper method untuk setup availability listeners
   setupAvailabilityListeners(formType) {
@@ -786,150 +980,159 @@ class MyItemsPage extends HTMLElement {
   }
 
   showEditForm() {
-    this.querySelector("#add-item-section").classList.add("hidden")
-    this.querySelector("#edit-item-section").classList.remove("hidden")
-  }
+  this.querySelector("#add-item-section").classList.add("hidden")
+  const editSection = this.querySelector("#edit-item-section")
+  editSection.classList.remove("hidden")
+
+  // Tunggu DOM berubah dan terlihat
+  setTimeout(async () => {
+    const mapContainer = document.getElementById('edit-item-map')
+    if (mapContainer && mapContainer.offsetParent !== null) {
+      if (this.editItemMap && this.user?.province_name) {
+        try {
+          await this.editItemMap.initializeMap(this.user.province_name, this.user.city_name)
+          console.log("Apakah #edit-item-map visible?", document.getElementById("edit-item-map")?.offsetParent !== null);
+
+
+          if (this.editingItemData?.latitude && this.editingItemData?.longitude) {
+            this.editItemMap.setMarker(this.editingItemData.latitude, this.editingItemData.longitude)
+          }
+        } catch (error) {
+          console.error('Error initializing edit map:', error)
+        }
+      }
+    }
+  }, 1000) // beri delay cukup agar DOM benar-benar updated
+}
+
 
   hideEditForm() {
     this.showAddForm()
   }
 
   handleAddItem = async (event) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const form = event.target
-    const formData = new FormData(form)
+    const form = event.target;
+    const formData = new FormData(form);
 
-    // Validasi: minimal salah satu harus tersedia (jual atau sewa)
-    const availableSell = form.querySelector("#item-available-sell").checked
-    const availableRent = form.querySelector("#item-available-rent").checked
+    // --- Validasi Form (Tidak ada perubahan) ---
+    const availableSell = form.querySelector("#item-available-sell").checked;
+    const availableRent = form.querySelector("#item-available-rent").checked;
 
     if (!availableSell && !availableRent) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Validasi Error',
-        text: 'Item harus tersedia untuk dijual atau disewa (minimal salah satu).',
-        confirmButtonColor: '#3b82f6'
-      })
-      return
+        Swal.fire({
+            icon: 'warning',
+            title: 'Validasi Error',
+            text: 'Item harus tersedia untuk dijual atau disewa (minimal salah satu).',
+            confirmButtonColor: '#3b82f6'
+        });
+        return;
     }
 
-    // Validasi: jika tersedia untuk dijual, harus ada harga jual
     if (availableSell && !form.querySelector("#item-price-sell").value) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Harga Jual Kosong',
-        text: 'Harga jual harus diisi jika item tersedia untuk dijual.',
-        confirmButtonColor: '#3b82f6'
-      }).then(() => {
-        form.querySelector("#item-price-sell").focus()
-      })
-      return
+        Swal.fire({
+            icon: 'warning',
+            title: 'Harga Jual Kosong',
+            text: 'Harga jual harus diisi jika item tersedia untuk dijual.',
+            confirmButtonColor: '#3b82f6'
+        }).then(() => {
+            form.querySelector("#item-price-sell").focus();
+        });
+        return;
     }
 
-    // Validasi: jika tersedia untuk disewa, harus ada harga sewa
     if (availableRent && !form.querySelector("#item-price-rent").value) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Harga Sewa Kosong',
-        text: 'Harga sewa harus diisi jika item tersedia untuk disewa.',
-        confirmButtonColor: '#3b82f6'
-      }).then(() => {
-        form.querySelector("#item-price-rent").focus()
-      })
-      return
+        Swal.fire({
+            icon: 'warning',
+            title: 'Harga Sewa Kosong',
+            text: 'Harga sewa harus diisi jika item tersedia untuk disewa.',
+            confirmButtonColor: '#3b82f6'
+        }).then(() => {
+            form.querySelector("#item-price-rent").focus();
+        });
+        return;
     }
 
-    const categoryInput = this.querySelector("#item-category")
+    // --- Persiapan FormData (Tidak ada perubahan) ---
+    const categoryInput = this.querySelector("#item-category");
     if (!categoryInput || !categoryInput.value) {
-      formData.delete("category_id")
+        formData.delete("category_id");
     }
 
-    const priceSellInput = form.querySelector("#item-price-sell")
+    const priceSellInput = form.querySelector("#item-price-sell");
     if (!priceSellInput || !priceSellInput.value || priceSellInput.disabled) {
-      formData.delete("price_sell")
+        formData.delete("price_sell");
     }
 
-    const priceRentInput = form.querySelector("#item-price-rent")
+    const priceRentInput = form.querySelector("#item-price-rent");
     if (!priceRentInput || !priceRentInput.value || priceRentInput.disabled) {
-      formData.delete("price_rent")
+        formData.delete("price_rent");
     }
 
-    const availableRentCheckbox = form.querySelector("#item-available-rent")
-    const depositInput = form.querySelector("#item-deposit")
+    const availableRentCheckbox = form.querySelector("#item-available-rent");
+    const depositInput = form.querySelector("#item-deposit");
     if (!availableRentCheckbox || !availableRentCheckbox.checked || !depositInput || !depositInput.value) {
-      formData.delete("deposit_amount")
+        formData.delete("deposit_amount");
     }
 
-    const availableSellCheckbox = form.querySelector("#item-available-sell")
-    formData.set("is_available_for_sell", availableSellCheckbox && availableSellCheckbox.checked ? "true" : "false")
-    formData.set("is_available_for_rent", availableRentCheckbox && availableRentCheckbox.checked ? "true" : "false")
+    const availableSellCheckbox = form.querySelector("#item-available-sell");
+    formData.set("is_available_for_sell", availableSellCheckbox && availableSellCheckbox.checked ? "true" : "false");
+    formData.set("is_available_for_rent", availableRentCheckbox && availableRentCheckbox.checked ? "true" : "false");
 
-    // Pastikan status default adalah 'available'
-    formData.set("status", "available")
-
-    console.log("Sending new item FormData:")
+    formData.set("status", "available");
     for (const pair of formData.entries()) {
-      console.log(pair[0] + ": " + pair[1])
+        console.log(pair[0] + ": " + pair[1]);
     }
 
     try {
-      const result = await apiFormDataRequest("POST", "/items", formData)
+        const result = await apiFormDataRequest("POST", "/items", formData);
 
-      if (result.status === "success") {
-        console.log("Item added successfully:", result.data.item)
-        
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil!',
-          text: 'Item berhasil ditambahkan!',
-          confirmButtonColor: '#10b981'
-        })
-
-        console.log("Triggering ML backend data refresh...")
-        try {
-          await fetch("http://localhost:5001/api/refresh_data", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({}),
-          })
-          await new Promise((resolve) => setTimeout(resolve, 2000))
-          console.log("ML backend data refresh triggered.")
-        } catch (refreshError) {
-          console.warn("Failed to trigger ML backend data refresh:", refreshError)
+        if (result.status === "success") {
+            fetch("http://localhost:5001/api/refresh_data", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({}),
+            }).then(() => {
+            }).catch(refreshError => {
+                console.warn("Failed to trigger ML backend data refresh:", refreshError);
+            });
+            await Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Item berhasil ditambahkan. Anda akan dialihkan ke halaman utama.',
+                confirmButtonColor: '#10b981',
+                confirmButtonText: 'OK'
+            });
+            window.location.href = "/#/home";
+            
+        } else {
+            console.error("Failed to add item (API error):", result.message, result.errors);
+            let errorMessage = "Gagal menambahkan item: " + result.message;
+            if (result.errors && Array.isArray(result.errors)) {
+                errorMessage += "\nValidasi error:";
+                result.errors.forEach((err) => {
+                    errorMessage += `\n- ${err.param}: ${err.msg}`;
+                });
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Menambahkan Item',
+                text: errorMessage,
+                confirmButtonColor: '#ef4444'
+            });
         }
-
-        this.showAddForm()
-        this.fetchUserItems()
-      } else {
-        console.error("Failed to add item (API error):", result.message, result.errors)
-        let errorMessage = "Gagal menambahkan item: " + result.message
-        if (result.errors && Array.isArray(result.errors)) {
-          errorMessage += "\nValidasi error:"
-          result.errors.forEach((err) => {
-            errorMessage += `\n- ${err.param}: ${err.msg}`
-          })
-        }
-        
-        Swal.fire({
-          icon: 'error',
-          title: 'Gagal Menambahkan Item',
-          text: errorMessage,
-          confirmButtonColor: '#ef4444'
-        })
-      }
     } catch (error) {
-      console.error("Error adding item:", error)
-      Swal.fire({
-        icon: 'error',
-        title: 'Terjadi Kesalahan',
-        text: 'Terjadi kesalahan saat menambahkan item. Silakan coba lagi.',
-        confirmButtonColor: '#ef4444'
-      })
+        console.error("Error adding item:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Terjadi Kesalahan',
+            text: 'Terjadi kesalahan saat menambahkan item. Silakan coba lagi.',
+            confirmButtonColor: '#ef4444'
+        });
     }
-  }
+}
 
   async fetchUserItems() {
     this.isLoading = true
@@ -972,9 +1175,6 @@ class MyItemsPage extends HTMLElement {
             totalPages: result.pagination.totalPages || 1,
           }
         }
-
-        console.log("User Items:", this.items)
-        console.log("Pagination:", this.pagination)
         this.isLoading = false
         this.error = null
       } else {
@@ -1024,7 +1224,6 @@ class MyItemsPage extends HTMLElement {
   }
 
   async handleEditItem(itemId) {
-    console.log("Attempting to edit item with ID:", itemId)
   
     this.editingItemId = itemId
   
@@ -1033,7 +1232,6 @@ class MyItemsPage extends HTMLElement {
   
       if (apiResult.status === "success") {
         this.editingItemData = apiResult.data
-        console.log("Fetched item details for editing:", this.editingItemData)
   
         // Cek apakah item bisa diedit
         if (!this.canEditOrDelete(this.editingItemData)) {
@@ -1135,6 +1333,15 @@ class MyItemsPage extends HTMLElement {
       if (depositInput) depositInput.value = ""
     }
 
+    // Set coordinates if available
+    if (item.latitude && item.longitude) {
+        const editLatInput = form.querySelector("#edit-latitude")
+        const editLngInput = form.querySelector("#edit-longitude")
+        if (editLatInput) editLatInput.value = item.latitude
+        if (editLngInput) editLngInput.value = item.longitude
+        this.editSelectedLocation = { lat: item.latitude, lng: item.longitude }
+    }
+
     // Setup status change listener untuk validasi availability
     if (statusSelect) {
       statusSelect.addEventListener("change", (event) => {
@@ -1154,174 +1361,154 @@ class MyItemsPage extends HTMLElement {
   }
 
   handleUpdateItem = async (event) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const form = event.target
-    const formData = new FormData(form)
+    const form = event.target;
+    const formData = new FormData(form);
 
+    // --- Validasi Form (Tidak ada perubahan) ---
     if (!this.editingItemId) {
-      console.error("No item ID set for editing.")
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Terjadi kesalahan: ID item yang diedit tidak ditemukan.',
-        confirmButtonColor: '#ef4444'
-      })
-      return
+        console.error("No item ID set for editing.");
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Terjadi kesalahan: ID item yang diedit tidak ditemukan.',
+            confirmButtonColor: '#ef4444'
+        });
+        return;
     }
 
-    // Cek lagi apakah item masih bisa diedit
     if (!this.canEditOrDelete(this.editingItemData)) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Tidak Dapat Diedit',
-        text: 'Item ini tidak dapat diedit karena sudah sold atau rented.',
-        confirmButtonColor: '#f59e0b'
-      })
-      return
+        Swal.fire({
+            icon: 'warning',
+            title: 'Tidak Dapat Diedit',
+            text: 'Item ini tidak dapat diedit karena sudah sold atau rented.',
+            confirmButtonColor: '#f59e0b'
+        });
+        return;
     }
 
-    const availableSellCheckbox = form.querySelector("#edit-item-available-sell")
-    const availableRentCheckbox = form.querySelector("#edit-item-available-rent")
-    const statusSelect = form.querySelector("#edit-item-status")
+    const availableSellCheckbox = form.querySelector("#edit-item-available-sell");
+    const availableRentCheckbox = form.querySelector("#edit-item-available-rent");
+    const statusSelect = form.querySelector("#edit-item-status");
 
-    // Validasi availability berdasarkan status
-    const validation = this.validateAvailability(
-      { status: statusSelect.value },
-      availableSellCheckbox.checked,
-      availableRentCheckbox.checked
-    )
+    const validation = this.validateAvailability({ status: statusSelect.value }, availableSellCheckbox.checked, availableRentCheckbox.checked);
 
     if (!validation.valid) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Validasi Error',
-        text: validation.message,
-        confirmButtonColor: '#f59e0b'
-      })
-      return
+        Swal.fire({
+            icon: 'warning',
+            title: 'Validasi Error',
+            text: validation.message,
+            confirmButtonColor: '#f59e0b'
+        });
+        return;
     }
 
-    // Validasi: minimal salah satu harus tersedia (jual atau sewa)
     if (!availableSellCheckbox.checked && !availableRentCheckbox.checked) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Validasi Error',
-        text: 'Item harus tersedia untuk dijual atau disewa (minimal salah satu).',
-        confirmButtonColor: '#f59e0b'
-      })
-      return
+        Swal.fire({
+            icon: 'warning',
+            title: 'Validasi Error',
+            text: 'Item harus tersedia untuk dijual atau disewa (minimal salah satu).',
+            confirmButtonColor: '#f59e0b'
+        });
+        return;
     }
 
-    // Validasi: jika tersedia untuk dijual, harus ada harga jual
     if (availableSellCheckbox.checked && !form.querySelector("#edit-item-price-sell").value) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Harga Jual Kosong',
-        text: 'Harga jual harus diisi jika item tersedia untuk dijual.',
-        confirmButtonColor: '#f59e0b'
-      }).then(() => {
-        form.querySelector("#edit-item-price-sell").focus()
-      })
-      return
+        Swal.fire({
+            icon: 'warning',
+            title: 'Harga Jual Kosong',
+            text: 'Harga jual harus diisi jika item tersedia untuk dijual.',
+            confirmButtonColor: '#f59e0b'
+        }).then(() => {
+            form.querySelector("#edit-item-price-sell").focus();
+        });
+        return;
     }
 
-    // Validasi: jika tersedia untuk disewa, harus ada harga sewa
     if (availableRentCheckbox.checked && !form.querySelector("#edit-item-price-rent").value) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Harga Sewa Kosong',
-        text: 'Harga sewa harus diisi jika item tersedia untuk disewa.',
-        confirmButtonColor: '#f59e0b'
-      }).then(() => {
-        form.querySelector("#edit-item-price-rent").focus()
-      })
-      return
+        Swal.fire({
+            icon: 'warning',
+            title: 'Harga Sewa Kosong',
+            text: 'Harga sewa harus diisi jika item tersedia untuk disewa.',
+            confirmButtonColor: '#f59e0b'
+        }).then(() => {
+            form.querySelector("#edit-item-price-rent").focus();
+        });
+        return;
     }
 
-    formData.delete("is_available_for_sell")
-    formData.delete("is_available_for_rent")
-    formData.append("is_available_for_sell", availableSellCheckbox.checked ? "true" : "false")
-    formData.append("is_available_for_rent", availableRentCheckbox.checked ? "true" : "false")
+    // --- Persiapan FormData (Tidak ada perubahan) ---
+    formData.delete("is_available_for_sell");
+    formData.delete("is_available_for_rent");
+    formData.append("is_available_for_sell", availableSellCheckbox.checked ? "true" : "false");
+    formData.append("is_available_for_rent", availableRentCheckbox.checked ? "true" : "false");
 
-    const depositInput = form.querySelector("#edit-item-deposit")
+    const depositInput = form.querySelector("#edit-item-deposit");
     if (!availableRentCheckbox.checked || !depositInput.value) {
-      formData.delete("deposit_amount")
+        formData.delete("deposit_amount");
     }
 
-    const priceSellInput = this.querySelector("#edit-item-price-sell")
-    const priceRentInput = this.querySelector("#edit-item-price-rent")
+    const priceSellInput = this.querySelector("#edit-item-price-sell");
+    const priceRentInput = this.querySelector("#edit-item-price-rent");
 
-    if (!priceSellInput.value || priceSellInput.disabled) formData.delete("price_sell")
-    if (!priceRentInput.value || priceRentInput.disabled) formData.delete("price_rent")
+    if (!priceSellInput.value || priceSellInput.disabled) formData.delete("price_sell");
+    if (!priceRentInput.value || priceRentInput.disabled) formData.delete("price_rent");
 
-    formData.append("id", this.editingItemId)
-
-    console.log("Sending updated item FormData:")
+    formData.append("id", this.editingItemId);
     for (const pair of formData.entries()) {
-      console.log(pair[0] + ": " + pair[1])
+        console.log(pair[0] + ": " + pair[1]);
     }
 
     try {
-      const result = await apiFormDataRequest("PATCH", `/items/${this.editingItemId}`, formData)
+        const result = await apiFormDataRequest("PATCH", `/items/${this.editingItemId}`, formData);
 
-      if (result.status === "success") {
-        console.log("Item updated successfully:", result.data.item)
-        
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil!',
-          text: 'Item berhasil diupdate!',
-          confirmButtonColor: '#10b981'
-        })
-
-        console.log("Triggering ML backend data refresh...")
-        try {
-          await fetch("http://localhost:5001/api/refresh_data", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({}),
-          })
-          await new Promise((resolve) => setTimeout(resolve, 2000))
-          console.log("ML backend data refresh triggered.")
-        } catch (refreshError) {
-          console.warn("Failed to trigger ML backend data refresh:", refreshError)
+        if (result.status === "success") {
+            fetch("http://localhost:5001/api/refresh_data", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({}),
+            }).then(() => {
+            }).catch(refreshError => {
+                console.warn("Failed to trigger ML backend data refresh:", refreshError);
+            });
+            await Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Item berhasil diupdate. Anda akan dialihkan ke halaman utama.',
+                confirmButtonColor: '#10b981',
+                confirmButtonText: 'OK'
+            });
+            window.location.href = "/#/home";
+        } else {
+            console.error("Failed to update item (API error):", result.message, result.errors);
+            let errorMessage = "Gagal mengupdate item: " + result.message;
+            if (result.errors && Array.isArray(result.errors)) {
+                errorMessage += "\nValidasi error:";
+                result.errors.forEach((err) => {
+                    errorMessage += `\n- ${err.param}: ${err.msg}`;
+                });
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Mengupdate Item',
+                text: errorMessage,
+                confirmButtonColor: '#ef4444'
+            });
         }
-
-        this.hideEditForm()
-        this.fetchUserItems()
-      } else {
-        console.error("Failed to update item (API error):", result.message, result.errors)
-        let errorMessage = "Gagal mengupdate item: " + result.message
-        if (result.errors && Array.isArray(result.errors)) {
-          errorMessage += "\nValidasi error:"
-          result.errors.forEach((err) => {
-            errorMessage += `\n- ${err.param}: ${err.msg}`
-          })
-        }
-        
-        Swal.fire({
-          icon: 'error',
-          title: 'Gagal Mengupdate Item',
-          text: errorMessage,
-          confirmButtonColor: '#ef4444'
-        })
-      }
     } catch (error) {
-      console.error("Error updating item:", error)
-      Swal.fire({
-        icon: 'error',
-        title: 'Terjadi Kesalahan',
-        text: 'Terjadi kesalahan saat mengupdate item. Silakan coba lagi.',
-        confirmButtonColor: '#ef4444'
-      })
+        console.error("Error updating item:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Terjadi Kesalahan',
+            text: 'Terjadi kesalahan saat mengupdate item. Silakan coba lagi.',
+            confirmButtonColor: '#ef4444'
+        });
     }
-  }
+}
 
   async handleDeleteItem(itemId) {
-    console.log("Attempting to delete item with ID:", itemId)
 
     try {
       // Konfirmasi delete dengan SweetAlert
@@ -1340,7 +1527,6 @@ class MyItemsPage extends HTMLElement {
         const deleteResult = await apiDelete(`/items/${itemId}`)
 
         if (deleteResult.status === "success") {
-          console.log("Item deleted successfully.")
           
           Swal.fire({
             icon: 'success',
@@ -1348,8 +1534,6 @@ class MyItemsPage extends HTMLElement {
             text: 'Item berhasil dihapus!',
             confirmButtonColor: '#10b981'
           })
-
-          console.log("Triggering ML backend data refresh...")
           try {
             await fetch("http://localhost:5001/api/refresh_data", {
               method: "POST",
@@ -1359,7 +1543,6 @@ class MyItemsPage extends HTMLElement {
               body: JSON.stringify({}),
             })
             await new Promise((resolve) => setTimeout(resolve, 2000))
-            console.log("ML backend data refresh triggered.")
           } catch (refreshError) {
             console.warn("Failed to trigger ML backend data refresh:", refreshError)
           }

@@ -43,24 +43,16 @@ class DetailTransactionPage extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log("Detail Transaction Component Connected")
-    // Initial render. This will show loading state while attributeChangedCallback sets the ID and triggers fetch.
     this.render()
-
-    // ✅ HANYA minta permission jika user sudah login - TIDAK register service worker
     if (Utils.isAuthenticated()) {
       this._ensureNotificationPermission()
     }
   }
 
   disconnectedCallback() {
-    console.log("Detail Transaction Component Disconnected")
-    // Remove event listeners when the component is removed from the DOM
     this.removeEventListeners()
-    // Disconnect Socket.io client when the component is removed
     this._disconnectSocket()
 
-    // Reset state properties when disconnected to clean up for potential reuse
     this.transactionId = null
     this.transactionDetails = null
     this.isLoading = true
@@ -72,7 +64,6 @@ class DetailTransactionPage extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    console.log(`Attribute '${name}' changed from '${oldValue}' to '${newValue}'`)
 
     const newTransactionId =
       newValue &&
@@ -95,7 +86,6 @@ class DetailTransactionPage extends HTMLElement {
       this._messagesError = null
 
       if (this.transactionId) {
-        console.log("Valid transaction ID set:", this.transactionId)
 
         if (!Utils.isAuthenticated()) {
           Swal.fire({
@@ -136,11 +126,9 @@ class DetailTransactionPage extends HTMLElement {
     this.transactionDetails = null
 
     try {
-      console.log(`Fetching transaction details for ID: ${transactionId}`)
       const response = await authenticatedRequest(`/transactions/${transactionId}`, "GET")
 
       if (response.status === "success" && response.data) {
-        console.log("Fetched transaction details successfully:", response.data)
         this.transactionDetails = response.data
         this.error = null
 
@@ -178,11 +166,9 @@ class DetailTransactionPage extends HTMLElement {
     this._messages = []
 
     try {
-      console.log(`Fetching messages for transaction ID: ${transactionId}`)
       const response = await authenticatedRequest(`/messages/transaction/${transactionId}`, "GET")
 
       if (response.status === "success" && response.data) {
-        console.log("Fetched messages successfully:", response.data)
         this._messages = Array.isArray(response.data) ? response.data : []
         this._messagesError = null
         this._messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
@@ -218,12 +204,9 @@ class DetailTransactionPage extends HTMLElement {
       if (!transactionId) {
         console.warn("Cannot connect Socket.io: No valid transaction ID.")
       } else if (this._isSocketConnected) {
-        console.log("Socket already connected.")
       }
       return
     }
-
-    console.log(`Attempting to connect Socket.io for transaction ID: ${transactionId}`)
 
     const token = localStorage.getItem("token")
     if (!token) {
@@ -266,7 +249,6 @@ class DetailTransactionPage extends HTMLElement {
     })
 
     this._socket.on("newMessage", (newMessage) => {
-      console.log("Received new message via Socket.io:", newMessage)
 
       if (!newMessage || !this.transactionId) {
         console.warn("Invalid message or missing transaction ID")
@@ -278,7 +260,6 @@ class DetailTransactionPage extends HTMLElement {
         Number.parseInt(newMessage.transaction_id, 10) === Number.parseInt(this.transactionId, 10)
       ) {
         if (!this._messages.find((msg) => msg.id === newMessage.id)) {
-          console.log("Adding new message to state:", newMessage)
           this._messages.push(newMessage)
           this._messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
           this.render()
@@ -307,13 +288,10 @@ class DetailTransactionPage extends HTMLElement {
         confirmButtonColor: "#4f46e5",
       })
     })
-
-    console.log("Socket.io event listeners for messages added.")
   }
 
   _disconnectSocket() {
     if (this._socket) {
-      console.log("Disconnecting Socket.io...")
       this._socket.off("connect")
       this._socket.off("disconnect")
       this._socket.off("connect_error", this._handleSocketError)
@@ -324,7 +302,6 @@ class DetailTransactionPage extends HTMLElement {
       this._socket.disconnect()
       this._socket = null
       this._isSocketConnected = false
-      console.log("Socket.io disconnected.")
     }
   }
 
@@ -334,8 +311,6 @@ class DetailTransactionPage extends HTMLElement {
   }
 
   _handleNewMessage(newMessage) {
-    console.log("Received new message via Socket.io:", newMessage)
-
     if (
       newMessage &&
       newMessage.transaction_id &&
@@ -343,7 +318,6 @@ class DetailTransactionPage extends HTMLElement {
       Number.parseInt(newMessage.transaction_id, 10) === Number.parseInt(this.transactionId, 10)
     ) {
       if (!this._messages.find((msg) => msg.id === newMessage.id)) {
-        console.log("Adding new message to state:", newMessage)
         this._messages.push(newMessage)
         this._messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
         this.render()
@@ -352,13 +326,11 @@ class DetailTransactionPage extends HTMLElement {
           const messagesListElement = this.querySelector("#messages-list")
           if (messagesListElement) {
             messagesListElement.scrollTop = messagesListElement.scrollHeight
-            console.log("Scrolled messages list to bottom.")
           } else {
             console.warn("Messages list element not found for scrolling after new message.")
           }
         })
       } else {
-        console.log("Received duplicate message via Socket.io, ignoring.", newMessage)
       }
     } else {
       console.warn("Received new message not for this transaction or invalid format, ignoring:", newMessage)
@@ -372,7 +344,6 @@ class DetailTransactionPage extends HTMLElement {
   }
 
   setupEventListeners() {
-    console.log("Setting up event listeners...")
     this.removeEventListeners()
 
     const transactionActionsDiv = this.querySelector("#transaction-actions")
@@ -387,41 +358,31 @@ class DetailTransactionPage extends HTMLElement {
         }
       }
       transactionActionsDiv.addEventListener("click", this.handleStatusUpdateDelegate)
-      console.log("Transaction actions delegate listener added.")
     }
 
     const sendMessageForm = this.querySelector("#send-message-form")
     if (sendMessageForm) {
       this._sendMessageSubmitHandler = this._handleSendMessageSocket
       sendMessageForm.addEventListener("submit", this._sendMessageSubmitHandler)
-      console.log("Send message form submit listener added.")
     }
-
-    console.log("Finished setting up event listeners.")
   }
 
   removeEventListeners() {
-    console.log("Removing event listeners...")
     const transactionActionsDiv = this.querySelector("#transaction-actions")
     if (transactionActionsDiv && this.handleStatusUpdateDelegate) {
       transactionActionsDiv.removeEventListener("click", this.handleStatusUpdateDelegate)
       this.handleStatusUpdateDelegate = null
-      console.log("Transaction actions delegate listener removed.")
     }
 
     const sendMessageForm = this.querySelector("#send-message-form")
     if (sendMessageForm && this._sendMessageSubmitHandler) {
       sendMessageForm.removeEventListener("submit", this._sendMessageSubmitHandler)
       this._sendMessageSubmitHandler = null
-      console.log("Send message form submit listener removed.")
     }
-
-    console.log("Finished removing event listeners.")
   }
 
   _handleSendMessageSocket(event) {
     event.preventDefault()
-    console.log("Send message form submitted (Socket.io).")
 
     if (!this._socket || !this._isSocketConnected) {
       console.warn("Socket not connected")
@@ -546,8 +507,6 @@ class DetailTransactionPage extends HTMLElement {
         this._messages,
         Utils.getUserInfo(),
       )
-
-      console.log("Render method: renderContentContent returned HTML string.")
       if (!contentHtml) {
         console.warn("renderContentContent returned an empty string or null.")
       }
