@@ -99,7 +99,7 @@ class HobbyPage extends HTMLElement {
 
   _connectSocket() {
     const token = localStorage.getItem('token');
-    this._socket = io('http://31.97.67.212:5000', {
+    this._socket = io('https://api.pinjemin.site', {
       auth: { token }
     });
 

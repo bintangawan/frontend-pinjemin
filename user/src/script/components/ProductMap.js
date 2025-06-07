@@ -318,7 +318,7 @@ export class ProductMap {
       }
 
       // Buat konten popup
-      const backendBaseUrl = "http://31.97.67.212:5000"
+      const backendBaseUrl = "https://api.pinjemin.site"
       const popupContent = `
         <div style="min-width: 220px; font-family: 'Poppins', sans-serif;">
           <div style="margin-bottom: 10px;">

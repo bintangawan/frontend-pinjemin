@@ -1,5 +1,5 @@
 // Define your backend base URL
-const BASE_URL = 'http://31.97.67.212:5000/api'; // <-- Pastikan URL ini benar
+const BASE_URL = 'https://api.pinjemin.site/api'; // <-- Pastikan URL ini benar
 
 // Function to get the JWT token from localStorage
 const getToken = () => {

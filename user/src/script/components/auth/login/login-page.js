@@ -365,7 +365,7 @@ class LoginPage extends HTMLElement {
       this.setLoading(true)
 
       try {
-        const response = await fetch("http://31.97.67.212:5000/api/auth/login", {
+        const response = await fetch("https://api.pinjemin.site/api/auth/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
