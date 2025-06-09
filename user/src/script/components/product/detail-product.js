@@ -1843,7 +1843,8 @@ class DetailProduct extends HTMLElement {
     const diffTime = Math.abs(end - start)
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     const totalRentCost = diffDays * this._item.price_rent
-    const totalCost = totalRentCost + this._item.deposit_amount
+    const depositAmount = Number(this._item.deposit_amount) || 0;
+    const totalCost = totalRentCost + depositAmount;
 
     const result = await Swal.fire({
       title: 'Konfirmasi Penyewaan',
@@ -1852,7 +1853,7 @@ class DetailProduct extends HTMLElement {
         <p><strong>Item:</strong> ${this._item.name}</p>
         <p><strong>Durasi:</strong> ${diffDays} hari</p>
         <p><strong>Biaya Sewa:</strong> ${this.formatRupiah(totalRentCost)}</p>
-        <p><strong>Deposit:</strong> ${this.formatRupiah(this._item.deposit_amount)}</p>
+        <p><strong>Deposit:</strong> ${this.formatRupiah(depositAmount)}</p>
         <hr class="my-2">
         <p><strong>Total Bayar:</strong> ${this.formatRupiah(totalCost)}</p>
       </div>

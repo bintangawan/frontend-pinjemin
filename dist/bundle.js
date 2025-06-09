@@ -25065,7 +25065,7 @@ var DetailProduct = /*#__PURE__*/function (_HTMLElement) {
     key: "handleRentFormSubmit",
     value: function () {
       var _handleRentFormSubmit = detail_product_asyncToGenerator(/*#__PURE__*/detail_product_regeneratorRuntime().mark(function _callee8(event) {
-        var form, startDateInput, endDateInput, startDate, endDate, start, end, today, currentUser, diffTime, diffDays, totalRentCost, totalCost, result, submitButton, cancelButton, response;
+        var form, startDateInput, endDateInput, startDate, endDate, start, end, today, currentUser, diffTime, diffDays, totalRentCost, depositAmount, totalCost, result, submitButton, cancelButton, response;
         return detail_product_regeneratorRuntime().wrap(function _callee8$(_context8) {
           while (1) switch (_context8.prev = _context8.next) {
             case 0:
@@ -25144,11 +25144,12 @@ var DetailProduct = /*#__PURE__*/function (_HTMLElement) {
               diffTime = Math.abs(end - start);
               diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
               totalRentCost = diffDays * this._item.price_rent;
-              totalCost = totalRentCost + this._item.deposit_amount;
-              _context8.next = 32;
+              depositAmount = Number(this._item.deposit_amount) || 0;
+              totalCost = totalRentCost + depositAmount;
+              _context8.next = 33;
               return sweetalert2_all_default().fire({
                 title: 'Konfirmasi Penyewaan',
-                html: "\n      <div class=\"text-left\">\n        <p><strong>Item:</strong> ".concat(this._item.name, "</p>\n        <p><strong>Durasi:</strong> ").concat(diffDays, " hari</p>\n        <p><strong>Biaya Sewa:</strong> ").concat(this.formatRupiah(totalRentCost), "</p>\n        <p><strong>Deposit:</strong> ").concat(this.formatRupiah(this._item.deposit_amount), "</p>\n        <hr class=\"my-2\">\n        <p><strong>Total Bayar:</strong> ").concat(this.formatRupiah(totalCost), "</p>\n      </div>\n    "),
+                html: "\n      <div class=\"text-left\">\n        <p><strong>Item:</strong> ".concat(this._item.name, "</p>\n        <p><strong>Durasi:</strong> ").concat(diffDays, " hari</p>\n        <p><strong>Biaya Sewa:</strong> ").concat(this.formatRupiah(totalRentCost), "</p>\n        <p><strong>Deposit:</strong> ").concat(this.formatRupiah(depositAmount), "</p>\n        <hr class=\"my-2\">\n        <p><strong>Total Bayar:</strong> ").concat(this.formatRupiah(totalCost), "</p>\n      </div>\n    "),
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#3b82f6',
@@ -25156,73 +25157,73 @@ var DetailProduct = /*#__PURE__*/function (_HTMLElement) {
                 confirmButtonText: 'Ya, Ajukan Sewa!',
                 cancelButtonText: 'Batal'
               });
-            case 32:
+            case 33:
               result = _context8.sent;
               if (result.isConfirmed) {
-                _context8.next = 35;
+                _context8.next = 36;
                 break;
               }
               return _context8.abrupt("return");
-            case 35:
+            case 36:
               submitButton = form.querySelector('button[type="submit"]');
               if (submitButton) submitButton.disabled = true;
               cancelButton = form.querySelector("#cancel-rent-button");
               if (cancelButton) cancelButton.disabled = true;
-              _context8.prev = 39;
-              _context8.next = 42;
+              _context8.prev = 40;
+              _context8.next = 43;
               return authenticatedRequest("/transactions", "POST", {
                 item_id: this._item.id,
                 type: "rent",
                 rent_start_date: startDate,
                 rent_end_date: endDate
               });
-            case 42:
+            case 43:
               response = _context8.sent;
               if (!(response.status === "success" && response.data)) {
-                _context8.next = 50;
+                _context8.next = 51;
                 break;
               }
-              _context8.next = 46;
+              _context8.next = 47;
               return sweetalert2_all_default().fire({
                 icon: 'success',
                 title: 'Berhasil!',
                 text: 'Transaksi penyewaan berhasil dibuat!',
                 confirmButtonColor: '#4f46e5'
               });
-            case 46:
+            case 47:
               this._showRentForm = false;
               window.location.hash = "#/transactions/".concat(response.data.id);
-              _context8.next = 51;
+              _context8.next = 52;
               break;
-            case 50:
+            case 51:
               sweetalert2_all_default().fire({
                 icon: 'error',
                 title: 'Gagal!',
                 text: "Gagal membuat transaksi penyewaan: " + (response.message || "Terjadi kesalahan."),
                 confirmButtonColor: '#4f46e5'
               });
-            case 51:
-              _context8.next = 56;
+            case 52:
+              _context8.next = 57;
               break;
-            case 53:
-              _context8.prev = 53;
-              _context8.t0 = _context8["catch"](39);
+            case 54:
+              _context8.prev = 54;
+              _context8.t0 = _context8["catch"](40);
               sweetalert2_all_default().fire({
                 icon: 'error',
                 title: 'Error!',
                 text: 'Terjadi kesalahan saat membuat transaksi penyewaan.',
                 confirmButtonColor: '#4f46e5'
               });
-            case 56:
-              _context8.prev = 56;
+            case 57:
+              _context8.prev = 57;
               this._showRentForm = false;
               this.renderContent();
-              return _context8.finish(56);
-            case 60:
+              return _context8.finish(57);
+            case 61:
             case "end":
               return _context8.stop();
           }
-        }, _callee8, this, [[39, 53, 56, 60]]);
+        }, _callee8, this, [[40, 54, 57, 61]]);
       }));
       function handleRentFormSubmit(_x6) {
         return _handleRentFormSubmit.apply(this, arguments);
