@@ -21693,7 +21693,7 @@ function mlApiService_regeneratorRuntime() { "use strict"; /*! regenerator-runti
 function mlApiService_asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
 function mlApiService_asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { mlApiService_asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { mlApiService_asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
 // Define the base URL for your ML/Recommendation APIs
-var ML_BASE_URL = "https://exml.pinjemin.site/api"; // <-- Base URL for ML services
+var ML_BASE_URL = "https://mlex.pinjemin.site/api"; // <-- Base URL for ML services
 
 // Function to get the JWT token from localStorage (needed for user-based recs)
 var mlApiService_getToken = function getToken() {
@@ -25344,7 +25344,7 @@ var DetailProduct = /*#__PURE__*/function (_HTMLElement) {
             case 0:
               _context11.prev = 0;
               _context11.next = 3;
-              return fetch("https://exml.pinjemin.site/api/refresh_data", {
+              return fetch("https://mlex.pinjemin.site/api/refresh_data", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json"
@@ -26156,7 +26156,7 @@ var MyItemsPage = /*#__PURE__*/function (_HTMLElement) {
                 _context.next = 40;
                 break;
               }
-              fetch("https://exml.pinjemin.site/api/refresh_data", {
+              fetch("https://mlex.pinjemin.site/api/refresh_data", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json"
@@ -26341,7 +26341,7 @@ var MyItemsPage = /*#__PURE__*/function (_HTMLElement) {
                 _context2.next = 50;
                 break;
               }
-              fetch("https://exml.pinjemin.site/api/refresh_data", {
+              fetch("https://mlex.pinjemin.site/api/refresh_data", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json"
@@ -27389,7 +27389,7 @@ var MyItemsPage = /*#__PURE__*/function (_HTMLElement) {
               });
               _context12.prev = 10;
               _context12.next = 13;
-              return fetch("https://exml.pinjemin.site/api/refresh_data", {
+              return fetch("https://mlex.pinjemin.site/api/refresh_data", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json"
