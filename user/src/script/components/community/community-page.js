@@ -439,9 +439,10 @@ class CommunityPage extends HTMLElement {
         
         @media (max-width: 768px) {
           .community-container {
-            height: 90vh;
+            height: 100dvh;
             border-radius: 0;
             border: none;
+            min-height: 0;
           }
           
           .message-content {

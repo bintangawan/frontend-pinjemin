@@ -342,7 +342,7 @@ class AllProduct extends HTMLElement {
         this.searchRecommendations = [];
         return;
       }
-      const mlResult = await fetchSearchRecommendations(keyword, 5);
+      const mlResult = await fetchSearchRecommendations(keyword, 10);
       if (mlResult && mlResult.recommendations?.length > 0) {
         const promises = mlResult.recommendations.map(async (rec) => {
             try {
@@ -431,26 +431,55 @@ class AllProduct extends HTMLElement {
   }
 
   renderUserRecommendationsSection() {
-    if (!this.getUserIdFromToken()) return "";
-    if (this.isLoadingUserRecommendations) return `<div>Loading recommendations...</div>`;
-    if (this.userRecommendationsError) return `<div>Error: ${this.userRecommendationsError}</div>`;
-    if (!this.userRecommendations || this.userRecommendations.length === 0) return `<div>No recommendations available.</div>`;
+  if (!this.getUserIdFromToken()) return "";
 
-    const backendBaseUrl = "https://api.pinjemin.site";
-    const formatRupiah = (money) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(money);
-    
-    return `
-      <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-gradient-to-r from-indigo-800 to-purple-900 rounded-xl shadow-lg mb-8 border border-indigo-600">
-        <h3 class="text-2xl font-bold mb-6 text-white flex items-center"><i class="fa-solid fa-sparkles mr-3"></i>Rekomendasi untuk Anda</h3>
-        <div class="relative">
-          <button class="scroll-left absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/20 hover:bg-white/30 text-white p-3 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300"><i class="fa-solid fa-angle-left text-lg"></i></button>
-          <div class="flex overflow-x-auto space-x-6 pb-4 custom-scrollbar recommendations-wrapper">
-            ${this.userRecommendations.map(rec => this.renderRecommendationCard(rec, backendBaseUrl, formatRupiah)).join('')}
-          </div>
-          <button class="scroll-right absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/20 hover:bg-white/30 text-white p-3 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300"><i class="fa-solid fa-angle-right text-lg"></i></button>
+  const backendBaseUrl = "https://api.pinjemin.site";
+  const formatRupiah = (money) =>
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(money);
+
+  let content;
+  if (this.isLoadingUserRecommendations) {
+    content = `
+      <div class="flex justify-center items-center h-48">
+        <div class="search-spinner"></div>
+      </div>
+    `;
+  } else if (this.userRecommendationsError) {
+    content = `<div class="text-center py-8 text-red-400">Error: ${this.userRecommendationsError}</div>`;
+  } else if (!this.userRecommendations || this.userRecommendations.length === 0) {
+    content = `<div class="text-center py-8 text-gray-400">Tidak ada rekomendasi tersedia untuk Anda.</div>`;
+  } else {
+    content = `
+      <div class="relative">
+        <button class="scroll-left absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/20 hover:bg-white/30 text-white p-3 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300">
+          <i class="fa-solid fa-angle-left text-lg"></i>
+        </button>
+        <div class="flex overflow-x-auto space-x-6 pb-4 custom-scrollbar recommendations-wrapper">
+          ${this.userRecommendations.map(rec =>
+            this.renderRecommendationCard(rec, backendBaseUrl, formatRupiah)
+          ).join('')}
         </div>
-      </div>`;
+        <button class="scroll-right absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/20 hover:bg-white/30 text-white p-3 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300">
+          <i class="fa-solid fa-angle-right text-lg"></i>
+        </button>
+      </div>
+    `;
   }
+
+  return `
+    <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-gradient-to-r from-indigo-800 to-purple-900 rounded-xl shadow-lg mb-8 text-white border border-indigo-600">
+      <h3 class="text-2xl font-bold mb-6 flex items-center">
+        <i class="fa-solid fa-sparkles mr-3"></i>Rekomendasi untuk Anda
+      </h3>
+      ${content}
+    </div>
+  `;
+}
+
 
   renderSearchRecommendationsSection() {
     if (!this.currentSearchKeyword) return "";
@@ -500,7 +529,7 @@ class AllProduct extends HTMLElement {
             <div class="absolute top-2 left-2"><span class="px-2 py-1 rounded-md text-xs font-medium ${statusInfo.class}">${statusInfo.display}</span></div>
           </div>
           <h5 class="text-sm font-bold text-gray-900 leading-tight line-clamp-2 mb-2">${rec.name || rec.product_name}</h5>
-          ${statusInfo.showAvailabilityBadges ? `<div>${rec.is_available_for_sell ? `<p class="text-sm font-semibold">Jual: ${formatRupiah(rec.price_sell)}</p>` : ''}${rec.is_available_for_rent ? `<p class="text-sm font-semibold">Sewa: ${formatRupiah(rec.price_rent)}/hari</p>` : ''}</div>` : ''}
+          ${statusInfo.showAvailabilityBadges ? `<div>${rec.is_available_for_sell ? `<p class="text-sm font-semibold text-gray-700">Jual: ${formatRupiah(rec.price_sell)}</p>` : ''}${rec.is_available_for_rent ? `<p class="text-sm font-semibold text-gray-700">Sewa: ${formatRupiah(rec.price_rent)}/hari</p>` : ''}</div>` : ''}
         </a>
       </div>`;
   }

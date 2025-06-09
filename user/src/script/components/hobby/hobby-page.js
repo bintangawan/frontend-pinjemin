@@ -450,9 +450,10 @@ class HobbyPage extends HTMLElement {
         
         @media (max-width: 768px) {
           .hobby-container {
-            height: 90vh;
+            height: 100dvh;
             border-radius: 0;
             border: none;
+            min-height: 0;
           }
           
           .message-content {

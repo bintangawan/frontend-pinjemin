@@ -356,7 +356,7 @@ class LandingPage extends HTMLElement {
                                 <span class="text-[#2E64E9]">Making All Your Needs Easier</span>
                             </h1>
                             <p class="text-xl md:text-2xl text-gray-700 leading-relaxed">
-                                Platform serbaguna yang memudahkan kamu membeli, menyewa, atau meminjam barang apapun.
+                                Platform serbaguna yang memudahkan kamu meminjam hingga membeli barang sesuai dengan kebutuhan hobimu.
                             </p>
                         </div>
                         
@@ -615,11 +615,14 @@ class LandingPage extends HTMLElement {
                     <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 animate-on-scroll">
                         <div class="bg-indigo-50 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
                             <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 20l-5.447-2.724A1 1 0 013 16.382V4.618a1 1 0 01.553-.894L9 2m0 0l6 3m-6-3v18m6-15l5.447 2.724A1 1 0 0121 7.618v11.764a1 1 0 01-.553.894L15 22m0 0V4">
+                                </path>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Filter & Pencarian</h3>
-                        <p class="text-gray-600">Temukan barang yang tepat dengan filter lokasi, harga, dan kategori.</p>
+
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Real-Time Maps</h3>
+                        <p class="text-gray-600">Temukan barang dengan mudah hanya dengan melihat lokasi barang yang tersedia di peta.</p>
                     </div>
                 </div>
             </div>
@@ -684,7 +687,20 @@ class LandingPage extends HTMLElement {
                             </svg>
                         </button>
                         <div class="faq-content hidden px-6 pb-4">
-                            <p class="text-gray-600">Pinjemin memiliki sistem review dan rating, chat langsung dengan penjual, serta semua transaksi tercatat dalam sistem. Ditambah dengan pembayaran COD, keamanan transaksi kamu terjamin.</p>
+                            <p class="text-gray-600">Pinjemin memiliki sistem review dan komunitas, chat langsung dengan penjual, serta semua transaksi tercatat dalam sistem. Ditambah dengan pembayaran COD, keamanan transaksi kamu terjamin.</p>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Item 5 -->
+                    <div class="faq-item bg-white rounded-lg shadow-sm animate-on-scroll">
+                        <button class="faq-button w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors duration-200">
+                            <span class="text-lg font-semibold text-gray-900">Apa yang membedakan Pinjemin dengan platform lain?</span>
+                            <svg class="faq-icon w-5 h-5 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-4">
+                            <p class="text-gray-600">Pinjemin memiliki berbagai fitur yang membantu pengguna dalam menemukan barang yang dicarinya, dilengkapi dengan model machine learning yang akan langsung memberikan rekomendasi dari produk yang relevant untuk kamu dan memiliki fitur map yang langsung menampilkan lokasi dan barang yang tersedia.</p>
                         </div>
                     </div>
                 </div>
@@ -792,7 +808,7 @@ class LandingPage extends HTMLElement {
                             <span class="text-2xl font-bold">Pinjemin</span>
                         </div>
                         <p class="text-gray-400 mb-4 max-w-md">
-                            Platform serbaguna yang memudahkan kamu membeli, menyewa, atau meminjam barang apapun. Making all your needs easier.
+                            Platform serbaguna yang memudahkan kamu meminjam hingga membeli barang sesuai dengan kebutuhan hobimu. Making all your needs easier.
                         </p>
                         <div class="flex space-x-4">
                             <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">
