@@ -1,5 +1,5 @@
 // Define the base URL for your ML/Recommendation APIs
-const ML_BASE_URL = "http://localhost:5001/api" // <-- Base URL for ML services
+const ML_BASE_URL = "https://exml.pinjemin.site/api" // <-- Base URL for ML services
 
 // Function to get the JWT token from localStorage (needed for user-based recs)
 const getToken = () => {

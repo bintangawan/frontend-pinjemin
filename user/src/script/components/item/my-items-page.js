@@ -1089,7 +1089,7 @@ setupLocationButtons() {
         const result = await apiFormDataRequest("POST", "/items", formData);
 
         if (result.status === "success") {
-            fetch("http://localhost:5001/api/refresh_data", {
+            fetch("https://exml.pinjemin.site/api/refresh_data", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({}),
@@ -1464,7 +1464,7 @@ setupLocationButtons() {
         const result = await apiFormDataRequest("PATCH", `/items/${this.editingItemId}`, formData);
 
         if (result.status === "success") {
-            fetch("http://localhost:5001/api/refresh_data", {
+            fetch("https://exml.pinjemin.site/api/refresh_data", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({}),
@@ -1535,7 +1535,7 @@ setupLocationButtons() {
             confirmButtonColor: '#10b981'
           })
           try {
-            await fetch("http://localhost:5001/api/refresh_data", {
+            await fetch("https://exml.pinjemin.site/api/refresh_data", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
