@@ -131,7 +131,32 @@ class AllProduct extends HTMLElement {
         .custom-scrollbar::-webkit-scrollbar { height: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: linear-gradient(90deg, #3b82f6, #10b981); border-radius: 4px; }
-      </style>
+        /* Tambahkan di dalam <style> di renderStructure() */
+        .search-spinner-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(255, 255, 255, 0.7);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 10;
+        }
+        .search-spinner {
+          border: 6px solid #f3f4f6; /* light grey */
+          border-top: 6px solid #3b82f6; /* blue */
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        </style>
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
       <div class="bg-white rounded-lg">
@@ -429,16 +454,25 @@ class AllProduct extends HTMLElement {
 
   renderSearchRecommendationsSection() {
     if (!this.currentSearchKeyword) return "";
-    if (this.isLoadingSearchRecommendations) return `<div>Loading search suggestions...</div>`;
-    if (this.searchRecommendationsError) return `<div>Error: ${this.searchRecommendationsError}</div>`;
-    if (!this.searchRecommendations || this.searchRecommendations.length === 0) return `<div>No suggestions found.</div>`;
 
     const backendBaseUrl = "https://api.pinjemin.site";
     const formatRupiah = (money) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(money);
-
-    return `
-      <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl shadow-lg mb-8 text-white border border-gray-700">
-        <h3 class="text-lg font-semibold mb-4 text-white flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Saran Terkait "${this.currentSearchKeyword}"</h3>
+    let content;
+    if (this.isLoadingSearchRecommendations) {
+      content = `
+        <div class="flex justify-center items-center h-48">
+          <div class="search-spinner"></div>
+        </div>
+      `;
+    } 
+    else if (this.searchRecommendationsError) {
+      content = `<div class="text-center py-8 text-red-400">Error: ${this.searchRecommendationsError}</div>`;
+    } 
+    else if (!this.searchRecommendations || this.searchRecommendations.length === 0) {
+      content = `<div class="text-center py-8 text-gray-400">Tidak ada saran yang ditemukan untuk "${this.currentSearchKeyword}".</div>`;
+    } 
+    else {
+      content = `
         <div class="relative">
           <button class="scroll-left absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full shadow"><i class="fa-solid fa-angle-left"></i></button>
           <div class="flex overflow-x-auto space-x-6 pb-4 custom-scrollbar recommendations-wrapper">
@@ -446,8 +480,15 @@ class AllProduct extends HTMLElement {
           </div>
           <button class="scroll-right absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full shadow"><i class="fa-solid fa-angle-right"></i></button>
         </div>
+      `;
+    }
+
+    return `
+      <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-8 lg:max-w-7xl lg:px-8 bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl shadow-lg mb-8 text-white border border-gray-700">
+        <h3 class="text-lg font-semibold mb-4 text-white flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Saran Terkait "${this.currentSearchKeyword}"</h3>
+        ${content}
       </div>`;
-  }
+}
 
   renderRecommendationCard(rec, backendBaseUrl, formatRupiah) {
     const statusInfo = this.getStatusInfo(rec);
