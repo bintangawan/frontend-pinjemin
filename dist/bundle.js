@@ -32563,9 +32563,10 @@ var DetailTransactionPage = /*#__PURE__*/function (_HTMLElement) {
     }
   }, {
     key: "handleStatusUpdate",
-    value: function () {
+    value: // Di dalam class DetailTransactionPage
+    function () {
       var _handleStatusUpdate = detail_transaction_page_asyncToGenerator(/*#__PURE__*/detail_transaction_page_regeneratorRuntime().mark(function _callee4(transactionId, newStatus) {
-        var result, response, errorMessage;
+        var result, response, mlApiUrl, errorMessage;
         return detail_transaction_page_regeneratorRuntime().wrap(function _callee4$(_context4) {
           while (1) switch (_context4.prev = _context4.next) {
             case 0:
@@ -32605,22 +32606,48 @@ var DetailTransactionPage = /*#__PURE__*/function (_HTMLElement) {
             case 13:
               response = _context4.sent;
               if (!(response.status === "success")) {
-                _context4.next = 21;
+                _context4.next = 22;
                 break;
               }
               console.log("Transaction status updated successfully:", response.data);
-              _context4.next = 18;
+              if (newStatus === "completed") {
+                console.log("Transaksi selesai. Memicu refresh data model di latar belakang...");
+
+                // Ganti URL ini dengan alamat API backend FastAPI Anda yang sebenarnya
+                mlApiUrl = "https://mlex.pinjemin.site/api/refresh_data"; // Panggil refresh_data tanpa 'await' (fire-and-forget)
+                fetch(mlApiUrl, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify({})
+                }).then(function (res) {
+                  if (!res.ok) {
+                    console.warn("Peringatan: Panggilan ke refresh_data kembali dengan status ".concat(res.status));
+                  }
+                  return res.json();
+                }).then(function (refreshResult) {
+                  console.log("Proses refresh data model telah dimulai di backend:", refreshResult);
+                })["catch"](function (refreshError) {
+                  console.error("Gagal memicu refresh data model:", refreshError);
+                });
+              }
+              // =================================================================
+              // AKHIR DARI PENERAPAN REFRESH_DATA
+              // =================================================================
+              _context4.next = 19;
               return sweetalert2_all_default().fire({
                 icon: "success",
                 title: "Berhasil!",
                 text: "Status transaksi berhasil diperbarui!",
                 confirmButtonColor: "#4f46e5"
               });
-            case 18:
+            case 19:
+              // Muat ulang detail transaksi di halaman untuk menampilkan status terbaru
               this.fetchTransactionDetails(transactionId);
-              _context4.next = 25;
+              _context4.next = 26;
               break;
-            case 21:
+            case 22:
               console.error("Failed to update transaction status:", response.message || "Unknown error", response);
               errorMessage = "Gagal memperbarui status transaksi: " + (response.message || "Terjadi kesalahan");
               if (response.errors && Array.isArray(response.errors)) {
@@ -32639,11 +32666,11 @@ var DetailTransactionPage = /*#__PURE__*/function (_HTMLElement) {
                 html: errorMessage.replace(/\n/g, "<br>"),
                 confirmButtonColor: "#4f46e5"
               });
-            case 25:
-              _context4.next = 31;
+            case 26:
+              _context4.next = 32;
               break;
-            case 27:
-              _context4.prev = 27;
+            case 28:
+              _context4.prev = 28;
               _context4.t0 = _context4["catch"](9);
               console.error("Error during API request for status update:", _context4.t0);
               sweetalert2_all_default().fire({
@@ -32652,11 +32679,11 @@ var DetailTransactionPage = /*#__PURE__*/function (_HTMLElement) {
                 text: "Terjadi kesalahan saat memperbarui status transaksi.",
                 confirmButtonColor: "#4f46e5"
               });
-            case 31:
+            case 32:
             case "end":
               return _context4.stop();
           }
-        }, _callee4, this, [[9, 27]]);
+        }, _callee4, this, [[9, 28]]);
       }));
       function handleStatusUpdate(_x3, _x4) {
         return _handleStatusUpdate.apply(this, arguments);

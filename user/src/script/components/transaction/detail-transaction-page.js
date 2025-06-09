@@ -800,73 +800,105 @@ class DetailTransactionPage extends HTMLElement {
     )
   }
 
-  async handleStatusUpdate(transactionId, newStatus) {
-    if (!transactionId || !newStatus) {
-      console.error("Missing transaction ID or new status for update.")
-      alert("Gagal memperbarui status: Informasi tidak lengkap.")
-      return
-    }
+  // Di dalam class DetailTransactionPage
+async handleStatusUpdate(transactionId, newStatus) {
+  if (!transactionId || !newStatus) {
+    console.error("Missing transaction ID or new status for update.");
+    alert("Gagal memperbarui status: Informasi tidak lengkap.");
+    return;
+  }
 
-    const result = await Swal.fire({
-      title: "Konfirmasi Perubahan Status",
-      html: `Apakah Anda yakin ingin mengubah status transaksi ini menjadi <strong>"${newStatus}"</strong>?`,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#4f46e5",
-      cancelButtonColor: "#6b7280",
-      confirmButtonText: "Ya, Ubah Status",
-      cancelButtonText: "Batal",
-    })
+  const result = await Swal.fire({
+    title: "Konfirmasi Perubahan Status",
+    html: `Apakah Anda yakin ingin mengubah status transaksi ini menjadi <strong>"${newStatus}"</strong>?`,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#4f46e5",
+    cancelButtonColor: "#6b7280",
+    confirmButtonText: "Ya, Ubah Status",
+    cancelButtonText: "Batal",
+  });
 
-    if (!result.isConfirmed) {
-      return
-    }
+  if (!result.isConfirmed) {
+    return;
+  }
 
-    try {
-      console.log(`Attempting to update transaction ${transactionId} status to: ${newStatus}`)
-      const response = await authenticatedRequest(`/transactions/${transactionId}/status`, "PATCH", {
-        status: newStatus,
-      })
+  try {
+    console.log(`Attempting to update transaction ${transactionId} status to: ${newStatus}`);
+    const response = await authenticatedRequest(`/transactions/${transactionId}/status`, "PATCH", {
+      status: newStatus,
+    });
 
-      if (response.status === "success") {
-        console.log("Transaction status updated successfully:", response.data)
-        await Swal.fire({
-          icon: "success",
-          title: "Berhasil!",
-          text: "Status transaksi berhasil diperbarui!",
-          confirmButtonColor: "#4f46e5",
+    if (response.status === "success") {
+      console.log("Transaction status updated successfully:", response.data);
+      if (newStatus === "completed") {
+        console.log("Transaksi selesai. Memicu refresh data model di latar belakang...");
+        
+        // Ganti URL ini dengan alamat API backend FastAPI Anda yang sebenarnya
+        const mlApiUrl = "https://mlex.pinjemin.site/api/refresh_data"; 
+
+        // Panggil refresh_data tanpa 'await' (fire-and-forget)
+        fetch(mlApiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
         })
-        this.fetchTransactionDetails(transactionId)
-      } else {
-        console.error("Failed to update transaction status:", response.message || "Unknown error", response)
-        let errorMessage = "Gagal memperbarui status transaksi: " + (response.message || "Terjadi kesalahan")
-        if (response.errors && Array.isArray(response.errors)) {
-          errorMessage += "\nValidasi error:"
-          response.errors.forEach((err) => {
-            if (err && err.param && err.msg) {
-              errorMessage += `\n- ${err.param}: ${err.msg}`
-            } else if (typeof err === "string") {
-              errorMessage += `\n- ${err}`
-            }
-          })
-        }
-        Swal.fire({
-          icon: "error",
-          title: "Gagal Memperbarui Status",
-          html: errorMessage.replace(/\n/g, "<br>"),
-          confirmButtonColor: "#4f46e5",
+        .then(res => {
+          if (!res.ok) {
+            console.warn(`Peringatan: Panggilan ke refresh_data kembali dengan status ${res.status}`);
+          }
+          return res.json();
         })
+        .then(refreshResult => {
+          console.log("Proses refresh data model telah dimulai di backend:", refreshResult);
+        })
+        .catch(refreshError => {
+          console.error("Gagal memicu refresh data model:", refreshError);
+        });
       }
-    } catch (error) {
-      console.error("Error during API request for status update:", error)
+      // =================================================================
+      // AKHIR DARI PENERAPAN REFRESH_DATA
+      // =================================================================
+
+      await Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "Status transaksi berhasil diperbarui!",
+        confirmButtonColor: "#4f46e5",
+      });
+      // Muat ulang detail transaksi di halaman untuk menampilkan status terbaru
+      this.fetchTransactionDetails(transactionId);
+
+    } else {
+      console.error("Failed to update transaction status:", response.message || "Unknown error", response);
+      let errorMessage = "Gagal memperbarui status transaksi: " + (response.message || "Terjadi kesalahan");
+      if (response.errors && Array.isArray(response.errors)) {
+        errorMessage += "\nValidasi error:";
+        response.errors.forEach((err) => {
+          if (err && err.param && err.msg) {
+            errorMessage += `\n- ${err.param}: ${err.msg}`;
+          } else if (typeof err === "string") {
+            errorMessage += `\n- ${err}`;
+          }
+        });
+      }
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "Terjadi kesalahan saat memperbarui status transaksi.",
+        title: "Gagal Memperbarui Status",
+        html: errorMessage.replace(/\n/g, "<br>"),
         confirmButtonColor: "#4f46e5",
-      })
+      });
     }
+  } catch (error) {
+    console.error("Error during API request for status update:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Terjadi kesalahan saat memperbarui status transaksi.",
+      confirmButtonColor: "#4f46e5",
+    });
   }
+}
 }
 
 customElements.define("detail-transaction-page", DetailTransactionPage)
