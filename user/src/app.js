@@ -229,7 +229,6 @@ if ("serviceWorker" in navigator) {
           if (newWorker) {
             newWorker.addEventListener("statechange", () => {
               if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                console.log("New service worker available")
               }
             })
           }
@@ -268,7 +267,6 @@ if ("serviceWorker" in navigator) {
 
 // ✅ Handle user logout
 window.addEventListener("userLoggedOut", () => {
-  console.log("User logged out, cleaning up notifications...")
 
   localStorage.removeItem("notification_permission_completed")
   localStorage.removeItem("notification_initialized")
@@ -277,7 +275,6 @@ window.addEventListener("userLoggedOut", () => {
 
 // ✅ Handle user login
 window.addEventListener("userLoggedIn", async () => {
-  console.log("User logged in, initializing notifications...")
 
   setTimeout(async () => {
     await initializeNotificationSystem()
@@ -291,7 +288,6 @@ setInterval(() => {
 
 // ✅ PERBAIKAN: Strict DOM content loaded handler
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log("DOM Content Loaded - Initializing app...")
 
   const isValidToken = checkTokenValidity()
 

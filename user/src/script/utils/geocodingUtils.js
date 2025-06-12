@@ -77,7 +77,6 @@ export class GeocodingUtils {
 
     // Cek cache terlebih dahulu
     if (this.geocodeCache[cacheKey]) {
-      console.log(`Using cached geocode for ${cacheKey}`)
       return this.geocodeCache[cacheKey]
     }
 
@@ -87,14 +86,12 @@ export class GeocodingUtils {
 
     // Prioritas: Kota dulu, baru provinsi
     if (normalizedCity && this.fallbackCoords[normalizedCity]) {
-      console.log(`Using fallback coordinates for city: ${normalizedCity}`)
       const result = this.fallbackCoords[normalizedCity]
       this.geocodeCache[cacheKey] = result
       return result
     }
 
     if (this.fallbackCoords[normalizedProvince]) {
-      console.log(`Using fallback coordinates for province: ${normalizedProvince}`)
       const result = this.fallbackCoords[normalizedProvince]
       this.geocodeCache[cacheKey] = result
       return result
@@ -103,8 +100,6 @@ export class GeocodingUtils {
     // Jika tidak ada di fallback, coba API Nominatim
     try {
       const query = cityName ? `${cityName}, ${provinceName}, Indonesia` : `${provinceName}, Indonesia`
-
-      console.log(`Geocoding: ${query}`)
 
       // Tambahkan timeout untuk fetch request
       const controller = new AbortController()
@@ -140,7 +135,6 @@ export class GeocodingUtils {
 
         // Cache hasil yang berhasil
         this.geocodeCache[cacheKey] = result
-        console.log(`Successfully geocoded: ${query}`)
         return result
       } else {
         console.warn(`No geocoding results for: ${query}`)
@@ -150,14 +144,12 @@ export class GeocodingUtils {
 
       // Jika API gagal, gunakan fallback lagi sebagai last resort
       if (normalizedCity && this.fallbackCoords[normalizedCity]) {
-        console.log(`Using fallback after API error for city: ${normalizedCity}`)
         const result = this.fallbackCoords[normalizedCity]
         this.geocodeCache[cacheKey] = result
         return result
       }
 
       if (this.fallbackCoords[normalizedProvince]) {
-        console.log(`Using fallback after API error for province: ${normalizedProvince}`)
         const result = this.fallbackCoords[normalizedProvince]
         this.geocodeCache[cacheKey] = result
         return result
@@ -256,7 +248,6 @@ export class GeocodingUtils {
   // Method untuk clear cache jika diperlukan
   static clearCache() {
     this.geocodeCache = {}
-    console.log("Geocoding cache cleared")
   }
 
   // Method untuk mendapatkan koordinat berdasarkan user location

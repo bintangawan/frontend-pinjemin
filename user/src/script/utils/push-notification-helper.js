@@ -12,7 +12,6 @@ class PushNotificationHelper {
       const response = await apiGet("/notifications/vapid-public-key")
       if (response && response.status === "success" && response.data && response.data.publicKey) {
         this.vapidPublicKey = response.data.publicKey
-        console.log("VAPID public key retrieved from server:", this.vapidPublicKey)
         return this.vapidPublicKey
       }
       console.error("Failed to get VAPID public key from server")

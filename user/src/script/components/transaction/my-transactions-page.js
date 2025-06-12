@@ -134,7 +134,6 @@ class MyTransactionsPage extends HTMLElement {
             const response = await authenticatedRequest(`/transactions${queryParams}`);
 
             if (response.status === 'success' && response.data) {
-                console.log('Fetched transactions:', response.data);
                 // Assuming response.data is the array of transactions
                 this.transactions = Array.isArray(response.data) ? response.data : []; // Ensure it's an array
                 this.renderTransactions(); // Render the list once data is fetched

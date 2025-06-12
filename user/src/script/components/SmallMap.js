@@ -102,7 +102,6 @@ export class SmallMap {
       });
       
       this.isInitialized = true;
-      console.log(`SmallMap initialized successfully for ${this.containerId}`);
       
       // Force a resize after initialization
       setTimeout(() => {

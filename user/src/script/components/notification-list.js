@@ -225,8 +225,6 @@ renderNotifications() {
 
   const notificationsHtml = this.notifications
     .map((notification) => {
-      // ✅ Debug logging untuk memeriksa struktur data
-      console.log('Notification data:', notification);
       
       // ✅ Pastikan type tersedia
       const notificationType = notification.type || 'general';

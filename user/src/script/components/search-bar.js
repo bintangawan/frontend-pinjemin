@@ -287,7 +287,6 @@ class SearchBar extends HTMLElement {
           searchParams.search = searchTerm
         }
 
-        console.log("Dispatching search event with params:", searchParams)
 
         // Add loading state
         searchButton.classList.add("loading")

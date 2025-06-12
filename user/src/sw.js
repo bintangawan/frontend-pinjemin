@@ -433,5 +433,3 @@ self.addEventListener("error", (event) => {
 self.addEventListener("unhandledrejection", (event) => {
   console.error("Service worker unhandled rejection:", event.reason)
 })
-
-console.log("Pinjemin Service Worker loaded successfully with minimal caching")

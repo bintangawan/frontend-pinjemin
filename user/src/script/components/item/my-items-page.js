@@ -991,7 +991,6 @@ setupLocationButtons() {
       if (this.editItemMap && this.user?.province_name) {
         try {
           await this.editItemMap.initializeMap(this.user.province_name, this.user.city_name)
-          console.log("Apakah #edit-item-map visible?", document.getElementById("edit-item-map")?.offsetParent !== null);
 
 
           if (this.editingItemData?.latitude && this.editingItemData?.longitude) {

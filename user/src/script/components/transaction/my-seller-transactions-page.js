@@ -134,7 +134,6 @@ class MySellerTransactionsPage extends HTMLElement {
             const response = await authenticatedRequest(`/transactions/seller`, 'GET');
 
             if (response.status === 'success' && response.data) {
-                console.log('Fetched seller transactions:', response.data);
                 this.sellerTransactions = response.data; // Assuming response.data is the array
                 this.error = null; // Clear any previous errors
             } else {
